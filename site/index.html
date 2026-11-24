@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#191918">
+    <meta name="description" content="Plan Factorio science pack production, explore recipe dependencies, and calculate material rates with modules and beacons.">
+    <title>Factorio Science Planner</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <p class="startup" role="status">Loading Science Planner…</p>
+    <noscript><p class="startup">Enable JavaScript to load the WebAssembly calculator.</p></noscript>
+    <script type="module">
+      try {
+        const { default: init } = await import("./pkg/planner.js");
+        await init();
+        document.querySelector(".startup")?.remove();
+      } catch (error) {
+        document.querySelector(".startup").textContent = "Science Planner could not load. Refresh the page to try again.";
+        console.error(error);
+      }
+    </script>
+  </body>
+</html>

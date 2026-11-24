@@ -1,0 +1,1502 @@
+{
+  "version": "2.1.25",
+  "packs": [
+    "automation-science-pack",
+    "logistic-science-pack",
+    "military-science-pack",
+    "chemical-science-pack",
+    "production-science-pack",
+    "utility-science-pack",
+    "space-science-pack",
+    "metallurgic-science-pack",
+    "electromagnetic-science-pack",
+    "agricultural-science-pack",
+    "cryogenic-science-pack",
+    "promethium-science-pack"
+  ],
+  "machines": {
+    "assembling-machine-3": {
+      "name": "Assembling machine 3",
+      "icon": "https://wiki.factorio.com/images/Assembling_machine_3.png",
+      "speed": 1.25,
+      "slots": 4,
+      "beaconable": true
+    },
+    "electric-furnace": {
+      "name": "Electric furnace",
+      "icon": "https://wiki.factorio.com/images/Electric_furnace.png",
+      "speed": 2,
+      "slots": 2,
+      "beaconable": true
+    },
+    "chemical-plant": {
+      "name": "Chemical plant",
+      "icon": "https://wiki.factorio.com/images/Chemical_plant.png",
+      "speed": 1,
+      "slots": 3,
+      "beaconable": true
+    },
+    "oil-refinery": {
+      "name": "Oil refinery",
+      "icon": "https://wiki.factorio.com/images/Oil_refinery.png",
+      "speed": 1,
+      "slots": 3,
+      "beaconable": true
+    },
+    "rocket-silo": {
+      "name": "Rocket silo",
+      "icon": "https://wiki.factorio.com/images/Rocket_silo.png",
+      "speed": 1,
+      "slots": 4,
+      "beaconable": true
+    },
+    "foundry": {
+      "name": "Foundry",
+      "icon": "https://wiki.factorio.com/images/Foundry.png",
+      "speed": 4,
+      "slots": 4,
+      "beaconable": true,
+      "builtInProductivity": 0.5
+    },
+    "biochamber": {
+      "name": "Biochamber",
+      "icon": "https://wiki.factorio.com/images/Biochamber.png",
+      "speed": 2,
+      "slots": 4,
+      "beaconable": true,
+      "builtInProductivity": 0.5
+    },
+    "electromagnetic-plant": {
+      "name": "Electromagnetic plant",
+      "icon": "https://wiki.factorio.com/images/Electromagnetic_plant.png",
+      "speed": 2,
+      "slots": 5,
+      "beaconable": true,
+      "builtInProductivity": 0.5
+    },
+    "cryogenic-plant": {
+      "name": "Cryogenic plant",
+      "icon": "https://wiki.factorio.com/images/Cryogenic_plant.png",
+      "speed": 2,
+      "slots": 8,
+      "beaconable": true
+    },
+    "crusher": {
+      "name": "Crusher",
+      "icon": "https://wiki.factorio.com/images/Crusher.png",
+      "speed": 1,
+      "slots": 2,
+      "beaconable": true
+    },
+    "recycler": {
+      "name": "Recycler",
+      "icon": "https://wiki.factorio.com/images/Recycler.png",
+      "speed": 0.5,
+      "slots": 4,
+      "beaconable": true
+    },
+    "captive-biter-spawner": {
+      "name": "Captive biter spawner",
+      "icon": "https://wiki.factorio.com/images/Captive_biter_spawner.png",
+      "speed": 1,
+      "slots": 0,
+      "beaconable": false
+    },
+    "rocket-launch": {
+      "name": "Rocket launch",
+      "icon": "https://wiki.factorio.com/images/Rocket_silo.png",
+      "speed": 1,
+      "slots": 0,
+      "beaconable": false
+    }
+  },
+  "modules": {
+    "speed": [
+      0,
+      0.2,
+      0.3,
+      0.5
+    ],
+    "productivity": [
+      0,
+      0.04,
+      0.06,
+      0.1
+    ],
+    "productivitySpeed": [
+      0,
+      -0.05,
+      -0.1,
+      -0.15
+    ]
+  },
+  "beacon": {
+    "efficiency": 1.5,
+    "slots": 2,
+    "profile": [
+      1.0,
+      0.7071,
+      0.5773,
+      0.5,
+      0.4472,
+      0.4082,
+      0.3779,
+      0.3535,
+      0.3333,
+      0.3162,
+      0.3015,
+      0.2886,
+      0.2773,
+      0.2672,
+      0.2581,
+      0.25,
+      0.2425,
+      0.2357,
+      0.2294,
+      0.2236,
+      0.2182,
+      0.2132,
+      0.2085,
+      0.2041,
+      0.2,
+      0.1961,
+      0.1924,
+      0.1889,
+      0.1856,
+      0.1825,
+      0.1796,
+      0.1767,
+      0.174,
+      0.1714,
+      0.169,
+      0.1666,
+      0.1643,
+      0.1622,
+      0.1601,
+      0.1581,
+      0.1561,
+      0.1543,
+      0.1524,
+      0.1507,
+      0.149,
+      0.1474,
+      0.1458,
+      0.1443,
+      0.1428,
+      0.1414,
+      0.14,
+      0.1386,
+      0.1373,
+      0.136,
+      0.1348,
+      0.1336,
+      0.1324,
+      0.1313,
+      0.1301,
+      0.129,
+      0.128,
+      0.127,
+      0.1259,
+      0.125,
+      0.124,
+      0.123,
+      0.1221,
+      0.1212,
+      0.1203,
+      0.1195,
+      0.1186,
+      0.1178,
+      0.117,
+      0.1162,
+      0.1154,
+      0.1147,
+      0.1139,
+      0.1132,
+      0.1125,
+      0.1118,
+      0.1111,
+      0.1104,
+      0.1097,
+      0.1091,
+      0.1084,
+      0.1078,
+      0.1072,
+      0.1066,
+      0.1059,
+      0.1054,
+      0.1048,
+      0.1042,
+      0.1036,
+      0.1031,
+      0.1025,
+      0.102,
+      0.1015,
+      0.101,
+      0.1005,
+      0.1
+    ]
+  },
+  "items": {
+    "accumulator": {
+      "name": "Accumulator",
+      "icon": "https://wiki.factorio.com/images/Accumulator.png",
+      "recipe": {
+        "time": 10,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "iron-plate": 2,
+          "battery": 5
+        }
+      }
+    },
+    "advanced-circuit": {
+      "name": "Advanced circuit",
+      "icon": "https://wiki.factorio.com/images/Advanced_circuit.png",
+      "recipe": {
+        "time": 6,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "electronic-circuit": 2,
+          "plastic-bar": 2,
+          "copper-cable": 4
+        }
+      }
+    },
+    "agricultural-science-pack": {
+      "name": "Agricultural science pack",
+      "icon": "https://wiki.factorio.com/images/Agricultural_science_pack.png",
+      "recipe": {
+        "time": 4,
+        "output": 1,
+        "machine": "biochamber",
+        "productivity": true,
+        "ingredients": {
+          "bioflux": 1,
+          "pentapod-egg": 1
+        }
+      }
+    },
+    "ammonia": {
+      "name": "Ammonia",
+      "icon": "https://wiki.factorio.com/images/Ammonia.png",
+      "recipe": {
+        "time": 1,
+        "output": 50,
+        "machine": "cryogenic-plant",
+        "productivity": true,
+        "ingredients": {
+          "ammoniacal-solution": 50
+        },
+        "note": "Uses the full ammoniacal solution separation inputs for this output."
+      }
+    },
+    "ammoniacal-solution": {
+      "name": "Ammoniacal solution",
+      "icon": "https://wiki.factorio.com/images/Ammoniacal_solution.png"
+    },
+    "assembling-machine-3": {
+      "name": "Assembling machine 3",
+      "icon": "https://wiki.factorio.com/images/Assembling_machine_3.png"
+    },
+    "automation-science-pack": {
+      "name": "Automation science pack",
+      "icon": "https://wiki.factorio.com/images/Automation_science_pack.png",
+      "recipe": {
+        "time": 5,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "copper-plate": 1,
+          "iron-gear-wheel": 1
+        }
+      }
+    },
+    "battery": {
+      "name": "Battery",
+      "icon": "https://wiki.factorio.com/images/Battery.png",
+      "recipe": {
+        "time": 4,
+        "output": 1,
+        "machine": "chemical-plant",
+        "productivity": true,
+        "ingredients": {
+          "sulfuric-acid": 20,
+          "iron-plate": 1,
+          "copper-plate": 1
+        }
+      }
+    },
+    "beacon": {
+      "name": "Beacon",
+      "icon": "https://wiki.factorio.com/images/Beacon.png"
+    },
+    "biochamber": {
+      "name": "Biochamber",
+      "icon": "https://wiki.factorio.com/images/Biochamber.png"
+    },
+    "bioflux": {
+      "name": "Bioflux",
+      "icon": "https://wiki.factorio.com/images/Bioflux.png",
+      "recipe": {
+        "time": 6,
+        "output": 4,
+        "machine": "biochamber",
+        "productivity": true,
+        "ingredients": {
+          "yumako-mash": 15,
+          "jelly": 12
+        }
+      }
+    },
+    "biter-egg": {
+      "name": "Biter egg",
+      "icon": "https://wiki.factorio.com/images/Biter_egg.png",
+      "recipe": {
+        "time": 10,
+        "output": 5,
+        "machine": "captive-biter-spawner",
+        "productivity": false,
+        "ingredients": {
+          "bioflux": 0.16666666666666666
+        },
+        "note": "Bioflux supplies the spawner’s operating fuel."
+      }
+    },
+    "calcite": {
+      "name": "Calcite",
+      "icon": "https://wiki.factorio.com/images/Calcite.png"
+    },
+    "captive-biter-spawner": {
+      "name": "Captive biter spawner",
+      "icon": "https://wiki.factorio.com/images/Captive_biter_spawner.png"
+    },
+    "carbon": {
+      "name": "Carbon",
+      "icon": "https://wiki.factorio.com/images/Carbon.png",
+      "recipe": {
+        "time": 2,
+        "output": 10,
+        "machine": "crusher",
+        "productivity": true,
+        "ingredients": {
+          "carbonic-asteroid-chunk": 1
+        },
+        "note": "Shows gross carbonic asteroid chunk input before returns."
+      }
+    },
+    "carbon-fiber": {
+      "name": "Carbon fiber",
+      "icon": "https://wiki.factorio.com/images/Carbon_fiber.png",
+      "recipe": {
+        "time": 5,
+        "output": 1,
+        "machine": "biochamber",
+        "productivity": true,
+        "ingredients": {
+          "yumako-mash": 10,
+          "carbon": 1
+        }
+      }
+    },
+    "carbonic-asteroid-chunk": {
+      "name": "Carbonic asteroid chunk",
+      "icon": "https://wiki.factorio.com/images/Carbonic_asteroid_chunk.png"
+    },
+    "chemical-plant": {
+      "name": "Chemical plant",
+      "icon": "https://wiki.factorio.com/images/Chemical_plant.png"
+    },
+    "chemical-science-pack": {
+      "name": "Chemical science pack",
+      "icon": "https://wiki.factorio.com/images/Chemical_science_pack.png",
+      "recipe": {
+        "time": 24,
+        "output": 2,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "engine-unit": 2,
+          "advanced-circuit": 3,
+          "sulfur": 1
+        }
+      }
+    },
+    "coal": {
+      "name": "Coal",
+      "icon": "https://wiki.factorio.com/images/Coal.png"
+    },
+    "copper-cable": {
+      "name": "Copper cable",
+      "icon": "https://wiki.factorio.com/images/Copper_cable.png",
+      "recipe": {
+        "time": 0.5,
+        "output": 2,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "copper-plate": 1
+        }
+      }
+    },
+    "copper-ore": {
+      "name": "Copper ore",
+      "icon": "https://wiki.factorio.com/images/Copper_ore.png"
+    },
+    "copper-plate": {
+      "name": "Copper plate",
+      "icon": "https://wiki.factorio.com/images/Copper_plate.png",
+      "recipe": {
+        "time": 3.2,
+        "output": 1,
+        "machine": "electric-furnace",
+        "productivity": true,
+        "ingredients": {
+          "copper-ore": 1
+        }
+      }
+    },
+    "crude-oil": {
+      "name": "Crude oil",
+      "icon": "https://wiki.factorio.com/images/Crude_oil.png"
+    },
+    "crusher": {
+      "name": "Crusher",
+      "icon": "https://wiki.factorio.com/images/Crusher.png"
+    },
+    "cryogenic-plant": {
+      "name": "Cryogenic plant",
+      "icon": "https://wiki.factorio.com/images/Cryogenic_plant.png"
+    },
+    "cryogenic-science-pack": {
+      "name": "Cryogenic science pack",
+      "icon": "https://wiki.factorio.com/images/Cryogenic_science_pack.png",
+      "recipe": {
+        "time": 20,
+        "output": 1,
+        "machine": "cryogenic-plant",
+        "productivity": true,
+        "ingredients": {
+          "ice": 3,
+          "lithium-plate": 1,
+          "fluoroketone-cold": 6
+        },
+        "note": "Shows gross cold fluoroketone input. Each craft returns 3 hot fluoroketone."
+      }
+    },
+    "electric-engine-unit": {
+      "name": "Electric engine unit",
+      "icon": "https://wiki.factorio.com/images/Electric_engine_unit.png",
+      "recipe": {
+        "time": 10,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "engine-unit": 1,
+          "lubricant": 15,
+          "electronic-circuit": 2
+        }
+      }
+    },
+    "electric-furnace": {
+      "name": "Electric furnace",
+      "icon": "https://wiki.factorio.com/images/Electric_furnace.png",
+      "recipe": {
+        "time": 5,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "steel-plate": 10,
+          "advanced-circuit": 5,
+          "stone-brick": 10
+        }
+      }
+    },
+    "electrolyte": {
+      "name": "Electrolyte",
+      "icon": "https://wiki.factorio.com/images/Electrolyte.png",
+      "recipe": {
+        "time": 5,
+        "output": 10,
+        "machine": "electromagnetic-plant",
+        "productivity": true,
+        "ingredients": {
+          "stone": 1,
+          "heavy-oil": 10,
+          "holmium-solution": 10
+        }
+      }
+    },
+    "electromagnetic-plant": {
+      "name": "Electromagnetic plant",
+      "icon": "https://wiki.factorio.com/images/Electromagnetic_plant.png"
+    },
+    "electromagnetic-science-pack": {
+      "name": "Electromagnetic science pack",
+      "icon": "https://wiki.factorio.com/images/Electromagnetic_science_pack.png",
+      "recipe": {
+        "time": 10,
+        "output": 1,
+        "machine": "electromagnetic-plant",
+        "productivity": true,
+        "ingredients": {
+          "supercapacitor": 1,
+          "accumulator": 1,
+          "electrolyte": 25,
+          "holmium-solution": 25
+        }
+      }
+    },
+    "electronic-circuit": {
+      "name": "Electronic circuit",
+      "icon": "https://wiki.factorio.com/images/Electronic_circuit.png",
+      "recipe": {
+        "time": 0.5,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "iron-plate": 1,
+          "copper-cable": 3
+        }
+      }
+    },
+    "engine-unit": {
+      "name": "Engine unit",
+      "icon": "https://wiki.factorio.com/images/Engine_unit.png",
+      "recipe": {
+        "time": 10,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "steel-plate": 1,
+          "iron-gear-wheel": 1,
+          "pipe": 2
+        }
+      }
+    },
+    "firearm-magazine": {
+      "name": "Firearm magazine",
+      "icon": "https://wiki.factorio.com/images/Firearm_magazine.png",
+      "recipe": {
+        "time": 1,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "iron-plate": 4
+        }
+      }
+    },
+    "fluorine": {
+      "name": "Fluorine",
+      "icon": "https://wiki.factorio.com/images/Fluorine.png"
+    },
+    "fluoroketone-cold": {
+      "name": "Fluoroketone (cold)",
+      "icon": "https://wiki.factorio.com/images/Fluoroketone_%28cold%29.png",
+      "recipe": {
+        "time": 5,
+        "output": 10,
+        "machine": "cryogenic-plant",
+        "productivity": false,
+        "ingredients": {
+          "fluoroketone-hot": 10
+        }
+      }
+    },
+    "fluoroketone-hot": {
+      "name": "Fluoroketone (hot)",
+      "icon": "https://wiki.factorio.com/images/Fluoroketone_%28hot%29.png",
+      "recipe": {
+        "time": 10,
+        "output": 50,
+        "machine": "cryogenic-plant",
+        "productivity": true,
+        "ingredients": {
+          "fluorine": 50,
+          "ammonia": 50,
+          "solid-fuel": 1,
+          "lithium": 1
+        }
+      }
+    },
+    "flying-robot-frame": {
+      "name": "Flying robot frame",
+      "icon": "https://wiki.factorio.com/images/Flying_robot_frame.png",
+      "recipe": {
+        "time": 20,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "electric-engine-unit": 1,
+          "battery": 2,
+          "steel-plate": 1,
+          "electronic-circuit": 3
+        }
+      }
+    },
+    "foundry": {
+      "name": "Foundry",
+      "icon": "https://wiki.factorio.com/images/Foundry.png"
+    },
+    "grenade": {
+      "name": "Grenade",
+      "icon": "https://wiki.factorio.com/images/Grenade.png",
+      "recipe": {
+        "time": 8,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "iron-plate": 5,
+          "coal": 10
+        }
+      }
+    },
+    "heavy-oil": {
+      "name": "Heavy oil",
+      "icon": "https://wiki.factorio.com/images/Heavy_oil.png",
+      "recipe": {
+        "time": 5,
+        "output": 25,
+        "machine": "oil-refinery",
+        "productivity": true,
+        "ingredients": {
+          "water": 50,
+          "crude-oil": 100
+        },
+        "note": "Uses the full advanced oil processing inputs for this output."
+      }
+    },
+    "holmium-ore": {
+      "name": "Holmium ore",
+      "icon": "https://wiki.factorio.com/images/Holmium_ore.png",
+      "recipe": {
+        "time": 0.2,
+        "output": 0.01,
+        "machine": "recycler",
+        "productivity": false,
+        "ingredients": {
+          "scrap": 1
+        },
+        "note": "Uses the expected 1% holmium yield from scrap recycling."
+      }
+    },
+    "holmium-plate": {
+      "name": "Holmium plate",
+      "icon": "https://wiki.factorio.com/images/Holmium_plate.png",
+      "recipe": {
+        "time": 1,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "holmium-solution": 20
+        }
+      }
+    },
+    "holmium-solution": {
+      "name": "Holmium solution",
+      "icon": "https://wiki.factorio.com/images/Holmium_solution.png",
+      "recipe": {
+        "time": 10,
+        "output": 100,
+        "machine": "chemical-plant",
+        "productivity": true,
+        "ingredients": {
+          "holmium-ore": 2,
+          "stone": 1,
+          "water": 10
+        }
+      }
+    },
+    "ice": {
+      "name": "Ice",
+      "icon": "https://wiki.factorio.com/images/Ice.png",
+      "recipe": {
+        "time": 2,
+        "output": 5,
+        "machine": "crusher",
+        "productivity": true,
+        "ingredients": {
+          "oxide-asteroid-chunk": 1
+        },
+        "note": "Shows gross oxide asteroid chunk input before returns."
+      }
+    },
+    "inserter": {
+      "name": "Inserter",
+      "icon": "https://wiki.factorio.com/images/Inserter.png",
+      "recipe": {
+        "time": 0.5,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "electronic-circuit": 1,
+          "iron-gear-wheel": 1,
+          "iron-plate": 1
+        }
+      }
+    },
+    "iron-gear-wheel": {
+      "name": "Iron gear wheel",
+      "icon": "https://wiki.factorio.com/images/Iron_gear_wheel.png",
+      "recipe": {
+        "time": 0.5,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "iron-plate": 2
+        }
+      }
+    },
+    "iron-ore": {
+      "name": "Iron ore",
+      "icon": "https://wiki.factorio.com/images/Iron_ore.png"
+    },
+    "iron-plate": {
+      "name": "Iron plate",
+      "icon": "https://wiki.factorio.com/images/Iron_plate.png",
+      "recipe": {
+        "time": 3.2,
+        "output": 1,
+        "machine": "electric-furnace",
+        "productivity": true,
+        "ingredients": {
+          "iron-ore": 1
+        }
+      }
+    },
+    "iron-stick": {
+      "name": "Iron stick",
+      "icon": "https://wiki.factorio.com/images/Iron_stick.png",
+      "recipe": {
+        "time": 0.5,
+        "output": 2,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "iron-plate": 1
+        }
+      }
+    },
+    "jelly": {
+      "name": "Jelly",
+      "icon": "https://wiki.factorio.com/images/Jelly.png",
+      "recipe": {
+        "time": 1,
+        "output": 4,
+        "machine": "biochamber",
+        "productivity": true,
+        "ingredients": {
+          "jellynut": 1
+        }
+      }
+    },
+    "jellynut": {
+      "name": "Jellynut",
+      "icon": "https://wiki.factorio.com/images/Jellynut.png"
+    },
+    "lava": {
+      "name": "Lava",
+      "icon": "https://wiki.factorio.com/images/Lava.png"
+    },
+    "light-oil": {
+      "name": "Light oil",
+      "icon": "https://wiki.factorio.com/images/Light_oil.png",
+      "recipe": {
+        "time": 5,
+        "output": 45,
+        "machine": "oil-refinery",
+        "productivity": true,
+        "ingredients": {
+          "water": 50,
+          "crude-oil": 100
+        },
+        "note": "Uses the full advanced oil processing inputs for this output."
+      }
+    },
+    "lithium": {
+      "name": "Lithium",
+      "icon": "https://wiki.factorio.com/images/Lithium.png",
+      "recipe": {
+        "time": 20,
+        "output": 5,
+        "machine": "cryogenic-plant",
+        "productivity": true,
+        "ingredients": {
+          "holmium-plate": 1,
+          "lithium-brine": 50,
+          "ammonia": 50
+        }
+      }
+    },
+    "lithium-brine": {
+      "name": "Lithium brine",
+      "icon": "https://wiki.factorio.com/images/Lithium_brine.png"
+    },
+    "lithium-plate": {
+      "name": "Lithium plate",
+      "icon": "https://wiki.factorio.com/images/Lithium_plate.png",
+      "recipe": {
+        "time": 6.4,
+        "output": 1,
+        "machine": "electric-furnace",
+        "productivity": true,
+        "ingredients": {
+          "lithium": 1
+        }
+      }
+    },
+    "logistic-science-pack": {
+      "name": "Logistic science pack",
+      "icon": "https://wiki.factorio.com/images/Logistic_science_pack.png",
+      "recipe": {
+        "time": 6,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "inserter": 1,
+          "transport-belt": 1
+        }
+      }
+    },
+    "low-density-structure": {
+      "name": "Low density structure",
+      "icon": "https://wiki.factorio.com/images/Low_density_structure.png",
+      "recipe": {
+        "time": 15,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "steel-plate": 2,
+          "copper-plate": 20,
+          "plastic-bar": 5
+        }
+      }
+    },
+    "lubricant": {
+      "name": "Lubricant",
+      "icon": "https://wiki.factorio.com/images/Lubricant.png",
+      "recipe": {
+        "time": 1,
+        "output": 10,
+        "machine": "chemical-plant",
+        "productivity": true,
+        "ingredients": {
+          "heavy-oil": 10
+        }
+      }
+    },
+    "metallurgic-science-pack": {
+      "name": "Metallurgic science pack",
+      "icon": "https://wiki.factorio.com/images/Metallurgic_science_pack.png",
+      "recipe": {
+        "time": 10,
+        "output": 1,
+        "machine": "foundry",
+        "productivity": true,
+        "ingredients": {
+          "tungsten-carbide": 3,
+          "tungsten-plate": 2,
+          "molten-copper": 200
+        }
+      }
+    },
+    "military-science-pack": {
+      "name": "Military science pack",
+      "icon": "https://wiki.factorio.com/images/Military_science_pack.png",
+      "recipe": {
+        "time": 10,
+        "output": 2,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "piercing-rounds-magazine": 1,
+          "grenade": 1,
+          "stone-wall": 2
+        }
+      }
+    },
+    "molten-copper": {
+      "name": "Molten copper",
+      "icon": "https://wiki.factorio.com/images/Molten_copper.png",
+      "recipe": {
+        "time": 16,
+        "output": 250,
+        "machine": "foundry",
+        "productivity": true,
+        "ingredients": {
+          "lava": 500,
+          "calcite": 1
+        },
+        "note": "Uses the full lava processing inputs for this output."
+      }
+    },
+    "molten-iron": {
+      "name": "Molten iron",
+      "icon": "https://wiki.factorio.com/images/Molten_iron.png",
+      "recipe": {
+        "time": 16,
+        "output": 250,
+        "machine": "foundry",
+        "productivity": true,
+        "ingredients": {
+          "lava": 500,
+          "calcite": 1
+        },
+        "note": "Uses the full lava processing inputs for this output."
+      }
+    },
+    "nutrients": {
+      "name": "Nutrients",
+      "icon": "https://wiki.factorio.com/images/Nutrients.png",
+      "recipe": {
+        "time": 2,
+        "output": 40,
+        "machine": "biochamber",
+        "productivity": true,
+        "ingredients": {
+          "bioflux": 5
+        }
+      }
+    },
+    "oil-refinery": {
+      "name": "Oil refinery",
+      "icon": "https://wiki.factorio.com/images/Oil_refinery.png"
+    },
+    "oxide-asteroid-chunk": {
+      "name": "Oxide asteroid chunk",
+      "icon": "https://wiki.factorio.com/images/Oxide_asteroid_chunk.png"
+    },
+    "pentapod-egg": {
+      "name": "Pentapod egg",
+      "icon": "https://wiki.factorio.com/images/Pentapod_egg.png",
+      "recipe": {
+        "time": 15,
+        "output": 1,
+        "machine": "biochamber",
+        "productivity": true,
+        "ingredients": {
+          "nutrients": 30,
+          "water": 60
+        },
+        "note": "One egg is retained per cycle to seed the next craft."
+      }
+    },
+    "petroleum-gas": {
+      "name": "Petroleum gas",
+      "icon": "https://wiki.factorio.com/images/Petroleum_gas.png",
+      "recipe": {
+        "time": 5,
+        "output": 45,
+        "machine": "oil-refinery",
+        "productivity": true,
+        "ingredients": {
+          "crude-oil": 100
+        },
+        "note": "From basic oil processing."
+      }
+    },
+    "piercing-rounds-magazine": {
+      "name": "Piercing rounds magazine",
+      "icon": "https://wiki.factorio.com/images/Piercing_rounds_magazine.png",
+      "recipe": {
+        "time": 6,
+        "output": 2,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "firearm-magazine": 2,
+          "steel-plate": 1,
+          "copper-plate": 2
+        }
+      }
+    },
+    "pipe": {
+      "name": "Pipe",
+      "icon": "https://wiki.factorio.com/images/Pipe.png",
+      "recipe": {
+        "time": 0.5,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "iron-plate": 1
+        }
+      }
+    },
+    "plastic-bar": {
+      "name": "Plastic bar",
+      "icon": "https://wiki.factorio.com/images/Plastic_bar.png",
+      "recipe": {
+        "time": 1,
+        "output": 2,
+        "machine": "chemical-plant",
+        "productivity": true,
+        "ingredients": {
+          "petroleum-gas": 20,
+          "coal": 1
+        }
+      }
+    },
+    "processing-unit": {
+      "name": "Processing unit",
+      "icon": "https://wiki.factorio.com/images/Processing_unit.png",
+      "recipe": {
+        "time": 10,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "electronic-circuit": 20,
+          "advanced-circuit": 2,
+          "sulfuric-acid": 5
+        }
+      }
+    },
+    "production-science-pack": {
+      "name": "Production science pack",
+      "icon": "https://wiki.factorio.com/images/Production_science_pack.png",
+      "recipe": {
+        "time": 21,
+        "output": 3,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "electric-furnace": 1,
+          "productivity-module": 1,
+          "rail": 30
+        }
+      }
+    },
+    "productivity-module": {
+      "name": "Productivity module",
+      "icon": "https://wiki.factorio.com/images/Productivity_module.png",
+      "recipe": {
+        "time": 15,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "advanced-circuit": 5,
+          "electronic-circuit": 5
+        }
+      }
+    },
+    "productivity-module-2": {
+      "name": "Productivity module 2",
+      "icon": "https://wiki.factorio.com/images/Productivity_module_2.png"
+    },
+    "productivity-module-3": {
+      "name": "Productivity module 3",
+      "icon": "https://wiki.factorio.com/images/Productivity_module_3.png"
+    },
+    "promethium-asteroid-chunk": {
+      "name": "Promethium asteroid chunk",
+      "icon": "https://wiki.factorio.com/images/Promethium_asteroid_chunk.png"
+    },
+    "promethium-science-pack": {
+      "name": "Promethium science pack",
+      "icon": "https://wiki.factorio.com/images/Promethium_science_pack.png",
+      "recipe": {
+        "time": 5,
+        "output": 10,
+        "machine": "cryogenic-plant",
+        "productivity": true,
+        "ingredients": {
+          "promethium-asteroid-chunk": 25,
+          "quantum-processor": 1,
+          "biter-egg": 10
+        }
+      }
+    },
+    "quantum-processor": {
+      "name": "Quantum processor",
+      "icon": "https://wiki.factorio.com/images/Quantum_processor.png",
+      "recipe": {
+        "time": 30,
+        "output": 1,
+        "machine": "electromagnetic-plant",
+        "productivity": true,
+        "ingredients": {
+          "tungsten-carbide": 1,
+          "processing-unit": 1,
+          "superconductor": 1,
+          "carbon-fiber": 1,
+          "lithium-plate": 2,
+          "fluoroketone-cold": 10
+        },
+        "note": "Shows gross cold fluoroketone input. Each craft returns 5 hot fluoroketone."
+      }
+    },
+    "radar": {
+      "name": "Radar",
+      "icon": "https://wiki.factorio.com/images/Radar.png",
+      "recipe": {
+        "time": 0.5,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "electronic-circuit": 5,
+          "iron-gear-wheel": 5,
+          "iron-plate": 10
+        }
+      }
+    },
+    "rail": {
+      "name": "Rail",
+      "icon": "https://wiki.factorio.com/images/Straight_rail.png",
+      "recipe": {
+        "time": 0.5,
+        "output": 2,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "stone": 1,
+          "iron-stick": 1,
+          "steel-plate": 1
+        }
+      }
+    },
+    "recycler": {
+      "name": "Recycler",
+      "icon": "https://wiki.factorio.com/images/Recycler.png"
+    },
+    "rocket-fuel": {
+      "name": "Rocket fuel",
+      "icon": "https://wiki.factorio.com/images/Rocket_fuel.png",
+      "recipe": {
+        "time": 15,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "solid-fuel": 10,
+          "light-oil": 10
+        }
+      }
+    },
+    "rocket-part": {
+      "name": "Rocket part",
+      "icon": "https://wiki.factorio.com/images/Rocket_part.png",
+      "recipe": {
+        "time": 3,
+        "output": 1,
+        "machine": "rocket-silo",
+        "productivity": true,
+        "ingredients": {
+          "processing-unit": 1,
+          "low-density-structure": 1,
+          "rocket-fuel": 1
+        }
+      },
+      "baseRecipe": {
+        "time": 3,
+        "output": 1,
+        "machine": "rocket-silo",
+        "productivity": true,
+        "ingredients": {
+          "processing-unit": 10,
+          "low-density-structure": 10,
+          "rocket-fuel": 10
+        }
+      }
+    },
+    "rocket-silo": {
+      "name": "Rocket silo",
+      "icon": "https://wiki.factorio.com/images/Rocket_silo.png"
+    },
+    "satellite": {
+      "name": "Satellite",
+      "icon": "https://wiki.factorio.com/images/Satellite.png",
+      "recipe": {
+        "time": 5,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "low-density-structure": 100,
+          "solar-panel": 100,
+          "accumulator": 100,
+          "radar": 5,
+          "processing-unit": 100,
+          "rocket-fuel": 50
+        }
+      }
+    },
+    "scrap": {
+      "name": "Scrap",
+      "icon": "https://wiki.factorio.com/images/Scrap.png"
+    },
+    "solar-panel": {
+      "name": "Solar panel",
+      "icon": "https://wiki.factorio.com/images/Solar_panel.png",
+      "recipe": {
+        "time": 10,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "steel-plate": 5,
+          "electronic-circuit": 15,
+          "copper-plate": 5
+        }
+      }
+    },
+    "solid-fuel": {
+      "name": "Solid fuel",
+      "icon": "https://wiki.factorio.com/images/Solid_fuel.png",
+      "recipe": {
+        "time": 1,
+        "output": 1,
+        "machine": "chemical-plant",
+        "productivity": true,
+        "ingredients": {
+          "light-oil": 10
+        },
+        "note": "From light oil."
+      }
+    },
+    "space-science-pack": {
+      "name": "Space science pack",
+      "icon": "https://wiki.factorio.com/images/Space_science_pack.png",
+      "recipe": {
+        "time": 15,
+        "output": 5,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "iron-plate": 2,
+          "carbon": 1,
+          "ice": 1
+        }
+      },
+      "baseRecipe": {
+        "time": 27.2,
+        "output": 1000,
+        "machine": "rocket-launch",
+        "productivity": false,
+        "ingredients": {
+          "rocket-part": 100,
+          "satellite": 1
+        },
+        "note": "Normal rocket launch throughput with buffered parts. Rocket-part crafting capacity is calculated separately."
+      }
+    },
+    "speed-module": {
+      "name": "Speed module",
+      "icon": "https://wiki.factorio.com/images/Speed_module.png"
+    },
+    "speed-module-2": {
+      "name": "Speed module 2",
+      "icon": "https://wiki.factorio.com/images/Speed_module_2.png"
+    },
+    "speed-module-3": {
+      "name": "Speed module 3",
+      "icon": "https://wiki.factorio.com/images/Speed_module_3.png"
+    },
+    "steel-plate": {
+      "name": "Steel plate",
+      "icon": "https://wiki.factorio.com/images/Steel_plate.png",
+      "recipe": {
+        "time": 16,
+        "output": 1,
+        "machine": "electric-furnace",
+        "productivity": true,
+        "ingredients": {
+          "iron-plate": 5
+        }
+      }
+    },
+    "stone": {
+      "name": "Stone",
+      "icon": "https://wiki.factorio.com/images/Stone.png"
+    },
+    "stone-brick": {
+      "name": "Stone brick",
+      "icon": "https://wiki.factorio.com/images/Stone_brick.png",
+      "recipe": {
+        "time": 3.2,
+        "output": 1,
+        "machine": "electric-furnace",
+        "productivity": true,
+        "ingredients": {
+          "stone": 2
+        }
+      }
+    },
+    "stone-wall": {
+      "name": "Wall",
+      "icon": "https://wiki.factorio.com/images/Wall.png",
+      "recipe": {
+        "time": 0.5,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "stone-brick": 5
+        }
+      }
+    },
+    "sulfur": {
+      "name": "Sulfur",
+      "icon": "https://wiki.factorio.com/images/Sulfur.png",
+      "recipe": {
+        "time": 1,
+        "output": 2,
+        "machine": "chemical-plant",
+        "productivity": true,
+        "ingredients": {
+          "water": 30,
+          "petroleum-gas": 30
+        }
+      }
+    },
+    "sulfuric-acid": {
+      "name": "Sulfuric acid",
+      "icon": "https://wiki.factorio.com/images/Sulfuric_acid.png",
+      "recipe": {
+        "time": 1,
+        "output": 50,
+        "machine": "chemical-plant",
+        "productivity": true,
+        "ingredients": {
+          "sulfur": 5,
+          "iron-plate": 1,
+          "water": 100
+        }
+      }
+    },
+    "supercapacitor": {
+      "name": "Supercapacitor",
+      "icon": "https://wiki.factorio.com/images/Supercapacitor.png",
+      "recipe": {
+        "time": 10,
+        "output": 1,
+        "machine": "electromagnetic-plant",
+        "productivity": true,
+        "ingredients": {
+          "holmium-plate": 2,
+          "superconductor": 2,
+          "electronic-circuit": 4,
+          "battery": 1,
+          "electrolyte": 10
+        }
+      }
+    },
+    "superconductor": {
+      "name": "Superconductor",
+      "icon": "https://wiki.factorio.com/images/Superconductor.png",
+      "recipe": {
+        "time": 5,
+        "output": 2,
+        "machine": "electromagnetic-plant",
+        "productivity": true,
+        "ingredients": {
+          "holmium-plate": 1,
+          "copper-plate": 1,
+          "plastic-bar": 1,
+          "light-oil": 5
+        }
+      }
+    },
+    "transport-belt": {
+      "name": "Transport belt",
+      "icon": "https://wiki.factorio.com/images/Transport_belt.png",
+      "recipe": {
+        "time": 0.5,
+        "output": 2,
+        "machine": "assembling-machine-3",
+        "productivity": false,
+        "ingredients": {
+          "iron-plate": 1,
+          "iron-gear-wheel": 1
+        }
+      }
+    },
+    "tungsten-carbide": {
+      "name": "Tungsten carbide",
+      "icon": "https://wiki.factorio.com/images/Tungsten_carbide.png",
+      "recipe": {
+        "time": 1,
+        "output": 1,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "tungsten-ore": 2,
+          "sulfuric-acid": 10,
+          "carbon": 1
+        }
+      }
+    },
+    "tungsten-ore": {
+      "name": "Tungsten ore",
+      "icon": "https://wiki.factorio.com/images/Tungsten_ore.png"
+    },
+    "tungsten-plate": {
+      "name": "Tungsten plate",
+      "icon": "https://wiki.factorio.com/images/Tungsten_plate.png",
+      "recipe": {
+        "time": 10,
+        "output": 1,
+        "machine": "foundry",
+        "productivity": true,
+        "ingredients": {
+          "tungsten-ore": 4,
+          "molten-iron": 10
+        }
+      }
+    },
+    "utility-science-pack": {
+      "name": "Utility science pack",
+      "icon": "https://wiki.factorio.com/images/Utility_science_pack.png",
+      "recipe": {
+        "time": 21,
+        "output": 3,
+        "machine": "assembling-machine-3",
+        "productivity": true,
+        "ingredients": {
+          "low-density-structure": 3,
+          "processing-unit": 2,
+          "flying-robot-frame": 1
+        }
+      }
+    },
+    "water": {
+      "name": "Water",
+      "icon": "https://wiki.factorio.com/images/Water.png"
+    },
+    "yumako": {
+      "name": "Yumako",
+      "icon": "https://wiki.factorio.com/images/Yumako.png"
+    },
+    "yumako-mash": {
+      "name": "Yumako mash",
+      "icon": "https://wiki.factorio.com/images/Yumako_mash.png",
+      "recipe": {
+        "time": 1,
+        "output": 2,
+        "machine": "biochamber",
+        "productivity": true,
+        "ingredients": {
+          "yumako": 1
+        }
+      }
+    }
+  }
+}
