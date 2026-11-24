@@ -87,6 +87,7 @@ fn Planner(props: &PlannerProps) -> Html {
     let custom_beacons = use_state_eq(|| "4".to_owned());
     let expanded = use_state(HashSet::<String>::new);
     let graph_viewport = use_node_ref();
+    let graph_revision = use_state(|| 0_u64);
 
     let change_pack = {
         let pack = pack.clone();
@@ -248,10 +249,10 @@ fn Planner(props: &PlannerProps) -> Html {
     };
     let reset = {
         let expanded = expanded.clone();
-        let graph_viewport = graph_viewport.clone();
+        let graph_revision = graph_revision.clone();
         Callback::from(move |_| {
             expanded.set(HashSet::new());
-            center_view(&graph_viewport);
+            graph_revision.set(graph_revision.wrapping_add(1));
         })
     };
     let recenter = {
@@ -356,8 +357,8 @@ fn Planner(props: &PlannerProps) -> Html {
                                 <button class="reset-button" type="button" onclick={reset} disabled={expanded.is_empty()}>{"Reset graph"}</button>
                             </div>
                         </div>
-                        <GraphViewport key={(*pack).clone()} viewport={graph_viewport}>
-                            <ul class="graph" aria-label="Recipes">
+                        <GraphViewport key={format!("{}:{}", *pack, *graph_revision)} viewport={graph_viewport}>
+                            <ul class="graph" aria-label="Recipes" style={format!("--graph-columns: {}", graph_columns(&result.root))}>
                                 {graph_node(model, &result.root, &toggle, true)}
                             </ul>
                         </GraphViewport>
@@ -424,6 +425,14 @@ fn settings_details(model: &Model, result: Option<&Calculation>, settings: Setti
             </span>
         </div>
     }
+}
+
+fn graph_columns(node: &Node) -> usize {
+    node.children
+        .iter()
+        .map(graph_columns)
+        .sum::<usize>()
+        .max(1)
 }
 
 fn graph_node(model: &Model, node: &Node, toggle: &Callback<String>, root: bool) -> Html {

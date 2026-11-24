@@ -13,7 +13,7 @@ struct Drag {
 
 pub fn center_view(viewport: &NodeRef) {
     if let Some(element) = viewport.cast::<Element>() {
-        element.set_scroll_left(PAN_INSET);
+        element.set_scroll_left((element.scroll_width() - element.client_width()) / 2);
         element.set_scroll_top(PAN_INSET);
     }
 }
