@@ -2,7 +2,7 @@
 
 build:
 	mkdir -p dist
-	cp site/index.html site/style.css site/favicon.svg dist/
+	cp -R site/. dist/
 	wasm-pack build --target web --release --out-dir dist/pkg --out-name planner --no-pack -- --locked
 
 test:

@@ -276,7 +276,8 @@ fn Planner(props: &PlannerProps) -> Html {
                         <strong>{"Factorio"}</strong>
                         <span>{"Science Planner"}</span>
                     </div>
-                    <nav aria-label="Resources">
+                    <nav aria-label="Main navigation" class="planner-nav">
+                        <a href="./balancers/">{"Balancers"}</a>
                         <a href="https://wiki.factorio.com/">{"Factorio Wiki"}</a>
                         <a href="https://github.com/StylishTriangles/factorio">{"GitHub"}</a>
                     </nav>

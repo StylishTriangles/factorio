@@ -436,6 +436,7 @@ td { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 @media (max-width: 600px) {
   .shell { width: calc(100% - 26px); }
   .site-header nav { gap: 9px; font-size: 12px; }
+  .site-header .planner-nav { flex-wrap: wrap; justify-content: flex-end; row-gap: 2px; }
   .site-header a + a { padding-left: 9px; }
   .brand { gap: 7px; }
   .brand img { width: 29px; height: 29px; }

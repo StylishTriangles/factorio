@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#191918">
+    <meta name="description" content="Preview express belt balancers and export blueprints for Factorio.">
+    <title>Belt Balancers · Factorio Science Planner</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="./balancers.css">
+    <script type="module" src="./balancers.js"></script>
+  </head>
+  <body class="balancers-page">
+    <header class="site-header">
+      <div class="shell header-inner">
+        <div class="brand">
+          <img src="../favicon.svg" width="36" height="36" alt="">
+          <strong>Factorio</strong>
+          <span>Science Planner</span>
+        </div>
+        <nav aria-label="Main navigation">
+          <a href="../">Science Planner</a>
+          <a href="./" aria-current="page">Balancers</a>
+        </nav>
+      </div>
+    </header>
+    <main class="balancers-main">
+      <div class="balancers-intro">
+        <h1>Belt Balancers</h1>
+        <p>Choose a size, inspect the belt layout, and copy it into Factorio.</p>
+      </div>
+
+      <section class="balancer-panel" aria-label="Belt layout and blueprint">
+        <div class="balancer-toolbar">
+          <div class="size-control" role="group" aria-labelledby="size-label">
+            <span id="size-label">Balancer size</span>
+            <div class="size-options">
+              <label><input class="sr-only" type="radio" name="size" value="2" disabled><span>2 × 2</span></label>
+              <label><input class="sr-only" type="radio" name="size" value="4" disabled checked><span>4 × 4</span></label>
+              <label><input class="sr-only" type="radio" name="size" value="8" disabled><span>8 × 8</span></label>
+            </div>
+          </div>
+          <button id="copy-blueprint" class="copy-button" type="button" disabled>
+            <span class="copy-icon" aria-hidden="true"></span>
+            <span id="copy-label">Copy blueprint</span>
+          </button>
+        </div>
+        <div class="balancer-board">
+          <canvas id="belt-diagram" role="img" aria-label="Belt layout"></canvas>
+          <noscript><p>Enable JavaScript to preview and copy a belt balancer.</p></noscript>
+        </div>
+        <div class="balancer-caption">
+          <ul class="balancer-legend" aria-label="Diagram legend">
+            <li><canvas id="legend-belt" width="68" height="52" aria-hidden="true"></canvas>Belt</li>
+            <li><canvas id="legend-splitter" width="64" height="64" aria-hidden="true"></canvas>Splitter</li>
+            <li><canvas id="legend-underground" width="120" height="52" aria-hidden="true"></canvas>Underground</li>
+          </ul>
+          <span id="footprint" aria-live="polite"></span>
+        </div>
+      </section>
+
+      <div class="balancer-notes">
+        <p>In Factorio, open <strong>Import string</strong> and paste the blueprint.</p>
+        <a href="https://github.com/R-O-C-K-E-T/Factorio-SAT/blob/main/books/blue_narrow.txt">Layouts from Factorio-SAT</a>
+      </div>
+      <p id="blueprint-status" class="sr-only" role="status"></p>
+      <div class="manual-copy" id="manual-copy" hidden>
+        <label for="blueprint-string">Copy this blueprint string manually</label>
+        <textarea id="blueprint-string" rows="3" readonly spellcheck="false"></textarea>
+      </div>
+    </main>
+  </body>
+</html>
