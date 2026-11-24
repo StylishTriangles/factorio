@@ -1,3 +1,4 @@
+use crate::graph_viewport::{GraphViewport, center_view};
 use crate::model::{Calculation, Model, Node, Settings};
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -85,6 +86,7 @@ fn Planner(props: &PlannerProps) -> Html {
     let layout = use_state_eq(|| BeaconLayout::Single);
     let custom_beacons = use_state_eq(|| "4".to_owned());
     let expanded = use_state(HashSet::<String>::new);
+    let graph_viewport = use_node_ref();
 
     let change_pack = {
         let pack = pack.clone();
@@ -246,7 +248,15 @@ fn Planner(props: &PlannerProps) -> Html {
     };
     let reset = {
         let expanded = expanded.clone();
-        Callback::from(move |_| expanded.set(HashSet::new()))
+        let graph_viewport = graph_viewport.clone();
+        Callback::from(move |_| {
+            expanded.set(HashSet::new());
+            center_view(&graph_viewport);
+        })
+    };
+    let recenter = {
+        let graph_viewport = graph_viewport.clone();
+        Callback::from(move |_| center_view(&graph_viewport))
     };
 
     let pack_id = if *pack == BASE_SPACE {
@@ -339,18 +349,18 @@ fn Planner(props: &PlannerProps) -> Html {
                         <div class="section-heading">
                             <div>
                                 <h2 id="graph-heading">{"Dependency graph"}</h2>
-                                <p>
-                                    {"Select an ingredient to expand its recipe."}
-                                    <span class="graph-mobile-hint">{" Swipe sideways to see more branches."}</span>
-                                </p>
+                                <p id="graph-instructions">{"Select an ingredient to expand its recipe. Drag to pan."}</p>
                             </div>
-                            <button class="reset-button" type="button" onclick={reset} disabled={expanded.is_empty()}>{"Reset graph"}</button>
+                            <div class="graph-actions">
+                                <button class="reset-button" type="button" onclick={recenter}>{"Center view"}</button>
+                                <button class="reset-button" type="button" onclick={reset} disabled={expanded.is_empty()}>{"Reset graph"}</button>
+                            </div>
                         </div>
-                        <div class="graph-viewport" tabindex="0" role="region" aria-label="Scrollable recipe graph">
+                        <GraphViewport key={(*pack).clone()} viewport={graph_viewport}>
                             <ul class="graph" aria-label="Recipes">
                                 {graph_node(model, &result.root, &toggle, true)}
                             </ul>
-                        </div>
+                        </GraphViewport>
                     </section>
                     {materials(model, result)}
                 } else {

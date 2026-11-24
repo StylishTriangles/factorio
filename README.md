@@ -2,7 +2,7 @@
 
 [Open the calculator](https://stylishtriangles.github.io/factorio/)
 
-Choose a science pack, set its output per minute or per second, and expand individual recipes in the dependency graph. The material table adds up all inputs at the ends of the open branches. If an ingredient is still collapsed anywhere, its remaining rate appears in the table. On a narrow screen, scroll the graph horizontally to see off-screen branches.
+Choose a science pack, set its output per minute or per second, and expand individual recipes in the dependency graph. Drag or scroll the graph in either direction to follow branches. **Center view** returns to the starting position and keeps the current branches open. The material table adds up all inputs at the ends of the open branches. If an ingredient is still collapsed anywhere, its remaining rate appears in the table.
 
 The planner covers the seven base-game packs and all twelve Space Age packs. Choose **Space science pack (base game)** for the satellite launch recipe. All calculations run in the browser in Rust compiled to WebAssembly.
 
