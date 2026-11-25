@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
+mod dense;
+
 pub const MAX_LANES: usize = 64;
 pub const MAX_GAP: usize = 4;
 
@@ -63,11 +65,20 @@ pub fn get_layout(
         return None;
     }
 
-    let mut layout = match PATTERNS.get(&format!("{inputs}x{outputs}")) {
-        Some(pattern) => compact_layout(pattern),
-        None => generate_layout(inputs, outputs),
+    let with_ports = |mut layout: Layout| {
+        route_ports(&mut layout, input_gap, output_gap);
+        layout
     };
-    route_ports(&mut layout, input_gap, output_gap);
+    let mut layout = if let Some(pattern) = PATTERNS.get(&format!("{inputs}x{outputs}")) {
+        with_ports(compact_layout(pattern))
+    } else {
+        let standard = with_ports(generate_layout(inputs, outputs));
+        let score = |layout: &Layout| (layout.width * layout.height, layout.parts.len());
+        dense::generate(inputs, outputs)
+            .map(with_ports)
+            .filter(|candidate| score(candidate) < score(&standard))
+            .unwrap_or(standard)
+    };
     index_tracks(&mut layout);
     Some(layout)
 }
@@ -644,6 +655,8 @@ mod tests {
             (4, 4),
             (3, 5),
             (12, 12),
+            (16, 16),
+            (32, 32),
             (9, 6),
             (64, 33),
             (33, 64),
@@ -663,7 +676,7 @@ mod tests {
     #[test]
     fn port_routes_do_not_add_sideloads_to_generated_layouts() {
         for gaps in [(0, 0), (1, 2), (MAX_GAP, 1)] {
-            let layout = get_layout(12, 12, gaps.0, gaps.1).unwrap();
+            let layout = get_layout(13, 13, gaps.0, gaps.1).unwrap();
             assert!(layout.feeds.values().all(|feeds| feeds.len() == 1));
 
             let occupied: HashMap<_, _> = layout
@@ -699,50 +712,73 @@ mod tests {
             check_geometry(&layout, 12, 4, gaps);
             assert!(layout.width <= 56 && layout.height <= 63 && layout.parts.len() <= 1_256);
 
-            let mut tiles = HashMap::new();
-            for (id, part) in layout.parts.iter().enumerate() {
-                tiles.insert((part.x, part.y), id);
-                if part.kind == Kind::Splitter {
-                    let (dx, dy) = DIRECTIONS[part.direction as usize];
-                    tiles.insert((part.x + dy.abs(), part.y + dx.abs()), id);
-                }
-            }
-            let tunnel_ends: HashMap<_, _> = layout.tunnels.iter().copied().collect();
-            let mut downstream = vec![Vec::new(); layout.parts.len()];
-            let mut upstream = vec![Vec::new(); layout.parts.len()];
-            for (id, part) in layout.parts.iter().enumerate() {
-                let (dx, dy) = DIRECTIONS[part.direction as usize];
-                let mut connect = |tile: Tile| {
-                    if let Some(&target) = tiles.get(&tile) {
-                        downstream[id].push(target);
-                        upstream[target].push(id);
-                    }
-                };
-                if part.kind == Kind::Input {
-                    connect(tunnel_ends[&(part.x, part.y)]);
-                } else {
-                    connect((part.x + dx, part.y + dy));
-                    if part.kind == Kind::Splitter {
-                        connect((part.x + dx + dy.abs(), part.y + dy + dx.abs()));
-                    }
-                }
-            }
-
-            let inputs = layout.input_rows.iter().map(|&row| tiles[&(0, row)]);
-            let outputs: Vec<_> = layout
-                .output_rows
-                .iter()
-                .map(|&row| tiles[&(layout.width - 1, row)])
-                .collect();
-            let mut supplied = HashSet::new();
-            for input in inputs {
-                let seen = reachable(&downstream, vec![input]);
-                assert!(outputs.iter().all(|output| seen.contains(output)));
-                supplied.extend(seen);
-            }
-            assert_eq!(supplied.len(), layout.parts.len());
-            assert_eq!(reachable(&upstream, outputs).len(), layout.parts.len());
+            check_tracks(&layout);
         }
+    }
+
+    #[test]
+    fn dense_squares_keep_belts_adjacent_and_use_less_space() {
+        for (size, max_width) in [(12, 38), (14, 41), (16, 41), (32, 92), (64, 191)] {
+            let layout = get_layout(size, size, 0, 0).unwrap();
+            assert_eq!(layout.height, size as i32);
+            assert!(layout.width <= max_width);
+            check_geometry(&layout, size, size, (0, 0));
+            check_tracks(&layout);
+        }
+
+        for gaps in [(1, 2), (3, 3), (MAX_GAP, MAX_GAP)] {
+            let layout = get_layout(16, 16, gaps.0, gaps.1).unwrap();
+            check_geometry(&layout, 16, 16, gaps);
+            let mut standard = generate_layout(16, 16);
+            route_ports(&mut standard, gaps.0, gaps.1);
+            assert!(layout.width * layout.height <= standard.width * standard.height);
+        }
+    }
+
+    fn check_tracks(layout: &Layout) {
+        let mut tiles = HashMap::new();
+        for (id, part) in layout.parts.iter().enumerate() {
+            tiles.insert((part.x, part.y), id);
+            if part.kind == Kind::Splitter {
+                let (dx, dy) = DIRECTIONS[part.direction as usize];
+                tiles.insert((part.x + dy.abs(), part.y + dx.abs()), id);
+            }
+        }
+        let tunnel_ends: HashMap<_, _> = layout.tunnels.iter().copied().collect();
+        let mut downstream = vec![Vec::new(); layout.parts.len()];
+        let mut upstream = vec![Vec::new(); layout.parts.len()];
+        for (id, part) in layout.parts.iter().enumerate() {
+            let (dx, dy) = DIRECTIONS[part.direction as usize];
+            let mut connect = |tile: Tile| {
+                if let Some(&target) = tiles.get(&tile) {
+                    downstream[id].push(target);
+                    upstream[target].push(id);
+                }
+            };
+            if part.kind == Kind::Input {
+                connect(tunnel_ends[&(part.x, part.y)]);
+            } else {
+                connect((part.x + dx, part.y + dy));
+                if part.kind == Kind::Splitter {
+                    connect((part.x + dx + dy.abs(), part.y + dy + dx.abs()));
+                }
+            }
+        }
+
+        let inputs = layout.input_rows.iter().map(|&row| tiles[&(0, row)]);
+        let outputs: Vec<_> = layout
+            .output_rows
+            .iter()
+            .map(|&row| tiles[&(layout.width - 1, row)])
+            .collect();
+        let mut supplied = HashSet::new();
+        for input in inputs {
+            let seen = reachable(&downstream, vec![input]);
+            assert!(outputs.iter().all(|output| seen.contains(output)));
+            supplied.extend(seen);
+        }
+        assert_eq!(supplied.len(), layout.parts.len());
+        assert_eq!(reachable(&upstream, outputs).len(), layout.parts.len());
     }
 
     fn reachable(edges: &[Vec<usize>], mut to_visit: Vec<usize>) -> HashSet<usize> {
