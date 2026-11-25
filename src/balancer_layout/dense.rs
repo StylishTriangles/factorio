@@ -7,8 +7,8 @@ mod rectangular;
 mod square_24;
 
 pub(super) fn generate(inputs: usize, outputs: usize) -> Option<Layout> {
-    if (inputs, outputs) == (24, 16) {
-        return rectangular::generate();
+    if inputs == 24 && matches!(outputs, 16 | 32) {
+        return rectangular::generate(outputs as i32);
     }
     if inputs != outputs || inputs == 0 || !inputs.is_multiple_of(2) {
         return None;
