@@ -18,7 +18,7 @@ Recipe and machine data are based on [Factorio 2.1.25 prototypes](https://github
 
 ## Run locally
 
-Install Rust, its `wasm32-unknown-unknown` target, and [wasm-pack](https://wasm-bindgen.github.io/wasm-pack/). Use Python 3 for the local server.
+Install Rust, its `wasm32-unknown-unknown` target, [wasm-pack](https://wasm-bindgen.github.io/wasm-pack/), and Python 3.
 
 ```sh
 rustup target add wasm32-unknown-unknown

@@ -4,6 +4,7 @@ build:
 	mkdir -p dist
 	cp -R site/. dist/
 	wasm-pack build --target web --release --out-dir dist/pkg --out-name planner --no-pack -- --locked
+	python3 scripts/version_wasm.py
 
 test:
 	cargo test --locked
