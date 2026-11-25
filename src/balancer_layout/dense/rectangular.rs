@@ -121,21 +121,28 @@ pub(super) fn generate(outputs: i32) -> Option<Layout> {
         }
     }
 
-    // Join the mixer with the seeds on their shared straight-belt column.
+    // On expansion all input belts stay straight across the join. The seed
+    // can feed the first real mixer column directly.
     let seed_span = seed.width - 1;
+    let mixer_offset = if expanding {
+        parts.retain(|part| part.x < seed_span);
+        seed_span - 1
+    } else {
+        seed_span
+    };
     parts.extend(
         mixer
             .into_iter()
             .filter(|part| part.x != 0)
             .map(|part| Part {
-                x: part.x + seed_span,
+                x: part.x + mixer_offset,
                 ..part
             }),
     );
     // Let an open outlet draw from the whole bank when its neighbors back up.
-    append_seed_groups(&mut parts, &seed, outputs / GROUP, seed_span + width - 1);
+    append_seed_groups(&mut parts, &seed, outputs / GROUP, mixer_offset + width - 1);
     Some(Layout {
-        width: width + 2 * seed_span,
+        width: width + mixer_offset + seed_span,
         height,
         input_rows: (0..3 * GROUP).collect(),
         output_rows: (0..outputs).collect(),

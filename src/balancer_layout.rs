@@ -57,6 +57,16 @@ pub fn get_layout(
     input_gap: usize,
     output_gap: usize,
 ) -> Option<Layout> {
+    get_layout_variant(inputs, outputs, input_gap, output_gap, false)
+}
+
+pub(crate) fn get_layout_variant(
+    inputs: usize,
+    outputs: usize,
+    input_gap: usize,
+    output_gap: usize,
+    compact_expansion: bool,
+) -> Option<Layout> {
     if !(1..=MAX_LANES).contains(&inputs)
         || !(1..=MAX_LANES).contains(&outputs)
         || input_gap > MAX_GAP
@@ -74,7 +84,7 @@ pub fn get_layout(
     } else {
         let standard = with_ports(generate_layout(inputs, outputs));
         let score = |layout: &Layout| (layout.width * layout.height, layout.parts.len());
-        dense::generate(inputs, outputs)
+        dense::generate(inputs, outputs, compact_expansion)
             .map(with_ports)
             .filter(|candidate| score(candidate) < score(&standard))
             .unwrap_or(standard)
@@ -737,7 +747,7 @@ mod tests {
 
     #[test]
     fn dense_rectangles_keep_adjacent_ports_and_live_tracks() {
-        for (outputs, max_width, height, max_parts) in [(16, 59, 24, 1_080), (32, 69, 32, 1_711)] {
+        for (outputs, max_width, height, max_parts) in [(16, 59, 24, 1_080), (32, 68, 32, 1_687)] {
             let layout = get_layout(24, outputs, 0, 0).unwrap();
             assert_eq!(layout.height, height);
             assert!(layout.width <= max_width && layout.parts.len() <= max_parts);
@@ -763,6 +773,23 @@ mod tests {
             for output_gap in 0..=MAX_GAP {
                 let layout = get_layout(24, 24, input_gap, output_gap).unwrap();
                 check_geometry(&layout, 24, 24, (input_gap, output_gap));
+            }
+        }
+    }
+
+    #[test]
+    fn compact_expansion_stays_smaller_with_the_same_ports() {
+        let layout = get_layout_variant(24, 32, 0, 0, true).unwrap();
+        assert_eq!((layout.width, layout.height), (37, 32));
+        assert_eq!(layout.parts.len(), 903);
+        check_tracks(&layout);
+
+        for input_gap in 0..=MAX_GAP {
+            for output_gap in 0..=MAX_GAP {
+                let layout = get_layout_variant(24, 32, input_gap, output_gap, true).unwrap();
+                check_geometry(&layout, 24, 32, (input_gap, output_gap));
+                let standard = get_layout(24, 32, input_gap, output_gap).unwrap();
+                assert!(layout.width * layout.height <= standard.width * standard.height);
             }
         }
     }

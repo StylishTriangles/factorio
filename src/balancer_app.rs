@@ -1,7 +1,7 @@
 use crate::app::{SiteHeader, chevron};
 use crate::balancer_blueprint::blueprint_string;
 use crate::balancer_canvas::{Art, draw_layout, draw_legend};
-use crate::balancer_layout::{MAX_GAP as MAX_SPACING, MAX_LANES, get_layout};
+use crate::balancer_layout::{MAX_GAP as MAX_SPACING, MAX_LANES, get_layout_variant};
 use crate::graph_viewport::GraphViewport;
 use wasm_bindgen::{JsCast, closure::Closure};
 use wasm_bindgen_futures::{JsFuture, spawn_local};
@@ -17,6 +17,7 @@ struct Settings {
     outputs: usize,
     input_spacing: usize,
     output_spacing: usize,
+    compact: bool,
 }
 
 const DEFAULT: Settings = Settings {
@@ -24,6 +25,7 @@ const DEFAULT: Settings = Settings {
     outputs: 4,
     input_spacing: 0,
     output_spacing: 0,
+    compact: true,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -44,11 +46,12 @@ struct Graphics {
 pub(crate) fn Balancers() -> Html {
     let counts = use_state_eq(|| DEFAULT);
     let generated = use_memo(*counts, |settings| {
-        get_layout(
+        get_layout_variant(
             settings.inputs,
             settings.outputs,
             settings.input_spacing,
             settings.output_spacing,
+            settings.compact,
         )
         .and_then(|layout| {
             blueprint_string(&layout)
@@ -67,6 +70,7 @@ pub(crate) fn Balancers() -> Html {
     let outputs = use_node_ref();
     let input_spacing = use_node_ref();
     let output_spacing = use_node_ref();
+    let compact = use_node_ref();
     let manual = use_node_ref();
     let files = use_node_ref();
     let choose = use_node_ref();
@@ -85,6 +89,7 @@ pub(crate) fn Balancers() -> Html {
         let outputs = outputs.clone();
         let input_spacing = input_spacing.clone();
         let output_spacing = output_spacing.clone();
+        let compact = compact.clone();
         Callback::from(move |()| {
             let read = |field: &NodeRef, min: usize, max: usize| {
                 let value = field.cast::<HtmlInputElement>()?.value_as_number();
@@ -97,6 +102,9 @@ pub(crate) fn Balancers() -> Html {
                 input_spacing: read(&input_spacing, 0, MAX_SPACING).unwrap_or(counts.input_spacing),
                 output_spacing: read(&output_spacing, 0, MAX_SPACING)
                     .unwrap_or(counts.output_spacing),
+                compact: compact
+                    .cast::<HtmlInputElement>()
+                    .map_or(counts.compact, |input| input.checked()),
             };
             if next != *counts {
                 *copy_revision.borrow_mut() += 1;
@@ -107,6 +115,7 @@ pub(crate) fn Balancers() -> Html {
     };
     let onblur = regenerate.reform(|_: FocusEvent| ());
     let on_spacing = regenerate.reform(|_: InputEvent| ());
+    let on_layout = regenerate.reform(|_: Event| ());
     let onsubmit = Callback::from(move |event: SubmitEvent| {
         event.prevent_default();
         regenerate.emit(());
@@ -338,6 +347,18 @@ pub(crate) fn Balancers() -> Html {
                     </div>
                     <div class="settings-details">
                         <span>{"Spacing in empty tiles between belts. "}<strong>{"0"}</strong>{" puts belts side by side."}</span>
+                        if (counts.inputs, counts.outputs) == (24, 32) {
+                            <span>
+                                <label class="belt-compact">
+                                    <input ref={compact} type="checkbox" checked={counts.compact}
+                                        aria-describedby={counts.compact.then_some("compact-throughput")} onchange={on_layout}/>
+                                    {"Compact layout"}
+                                </label>
+                            </span>
+                            if counts.compact {
+                                <span id="compact-throughput">{"Switch off for better flow when outputs back up."}</span>
+                            }
+                        }
                     </div>
                 </form>
 

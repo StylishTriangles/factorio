@@ -301,6 +301,8 @@ input[aria-invalid="true"] { outline: 2px solid #fe896e; outline-offset: -2px; }
 }
 .belt-spacing strong { color: var(--accent); font-variant-numeric: tabular-nums; }
 .belt-spacing input { grid-column: 1 / -1; width: 100%; margin: 0; accent-color: var(--accent); }
+.belt-compact { display: inline-flex; align-items: center; gap: 6px; color: var(--text); }
+.belt-compact input { margin: 0; accent-color: var(--accent); }
 .belt-zoom select { padding-left: 10px; }
 .belt-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .belt-actions button { min-height: 42px; }
