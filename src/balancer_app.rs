@@ -1,7 +1,7 @@
 use crate::app::{SiteHeader, chevron};
 use crate::balancer_blueprint::blueprint_string;
 use crate::balancer_canvas::{Art, draw_layout, draw_legend};
-use crate::balancer_layout::{MAX_GAP, MAX_LANES, get_layout};
+use crate::balancer_layout::{MAX_GAP as MAX_SPACING, MAX_LANES, get_layout};
 use crate::graph_viewport::GraphViewport;
 use wasm_bindgen::{JsCast, closure::Closure};
 use wasm_bindgen_futures::{JsFuture, spawn_local};
@@ -15,15 +15,15 @@ use yew::prelude::*;
 struct Settings {
     inputs: usize,
     outputs: usize,
-    input_gap: usize,
-    output_gap: usize,
+    input_spacing: usize,
+    output_spacing: usize,
 }
 
 const DEFAULT: Settings = Settings {
     inputs: 4,
     outputs: 4,
-    input_gap: 0,
-    output_gap: 0,
+    input_spacing: 0,
+    output_spacing: 0,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -47,8 +47,8 @@ pub(crate) fn Balancers() -> Html {
         get_layout(
             settings.inputs,
             settings.outputs,
-            settings.input_gap,
-            settings.output_gap,
+            settings.input_spacing,
+            settings.output_spacing,
         )
         .and_then(|layout| {
             blueprint_string(&layout)
@@ -65,8 +65,8 @@ pub(crate) fn Balancers() -> Html {
 
     let inputs = use_node_ref();
     let outputs = use_node_ref();
-    let input_gap = use_node_ref();
-    let output_gap = use_node_ref();
+    let input_spacing = use_node_ref();
+    let output_spacing = use_node_ref();
     let manual = use_node_ref();
     let files = use_node_ref();
     let choose = use_node_ref();
@@ -77,38 +77,40 @@ pub(crate) fn Balancers() -> Html {
     let splitter = use_node_ref();
     let underground = use_node_ref();
 
-    let onsubmit = {
+    let regenerate = {
         let counts = counts.clone();
         let feedback = feedback.clone();
         let copy_revision = copy_revision.clone();
         let inputs = inputs.clone();
         let outputs = outputs.clone();
-        let input_gap = input_gap.clone();
-        let output_gap = output_gap.clone();
-        Callback::from(move |event: SubmitEvent| {
-            event.prevent_default();
-            let read = |field: &NodeRef| {
+        let input_spacing = input_spacing.clone();
+        let output_spacing = output_spacing.clone();
+        Callback::from(move |()| {
+            let read = |field: &NodeRef, min: usize, max: usize| {
                 let value = field.cast::<HtmlInputElement>()?.value_as_number();
-                (value.is_finite() && value >= 0.0 && value.fract() == 0.0)
+                (value.fract() == 0.0 && (min as f64..=max as f64).contains(&value))
                     .then_some(value as usize)
             };
-            if let (Some(inputs), Some(outputs), Some(input_gap), Some(output_gap)) = (
-                read(&inputs),
-                read(&outputs),
-                read(&input_gap),
-                read(&output_gap),
-            ) {
+            let next = Settings {
+                inputs: read(&inputs, 1, MAX_LANES).unwrap_or(counts.inputs),
+                outputs: read(&outputs, 1, MAX_LANES).unwrap_or(counts.outputs),
+                input_spacing: read(&input_spacing, 0, MAX_SPACING).unwrap_or(counts.input_spacing),
+                output_spacing: read(&output_spacing, 0, MAX_SPACING)
+                    .unwrap_or(counts.output_spacing),
+            };
+            if next != *counts {
                 *copy_revision.borrow_mut() += 1;
                 feedback.set(CopyFeedback::Ready);
-                counts.set(Settings {
-                    inputs,
-                    outputs,
-                    input_gap,
-                    output_gap,
-                });
+                counts.set(next);
             }
         })
     };
+    let onblur = regenerate.reform(|_: FocusEvent| ());
+    let on_spacing = regenerate.reform(|_: InputEvent| ());
+    let onsubmit = Callback::from(move |event: SubmitEvent| {
+        event.prevent_default();
+        regenerate.emit(());
+    });
     let copy = {
         let generated = generated.clone();
         let feedback = feedback.clone();
@@ -301,15 +303,15 @@ pub(crate) fn Balancers() -> Html {
                         <div class="setting">
                             <h2>{"Inputs"}</h2>
                             <div class="rate-pair">
-                                <NumberField node={inputs} label="Inputs" initial={DEFAULT.inputs} min={1} max={MAX_LANES} unit="belts"/>
-                                <NumberField node={input_gap} label="Input gap" initial={DEFAULT.input_gap} min={0} max={MAX_GAP} unit="gap"/>
+                                <NumberField node={inputs} label="Inputs" initial={DEFAULT.inputs} onblur={onblur.clone()}/>
+                                {spacing_slider(input_spacing, "Input spacing", counts.input_spacing, on_spacing.clone())}
                             </div>
                         </div>
                         <div class="setting">
                             <h2>{"Outputs"}</h2>
                             <div class="rate-pair">
-                                <NumberField node={outputs} label="Outputs" initial={DEFAULT.outputs} min={1} max={MAX_LANES} unit="belts"/>
-                                <NumberField node={output_gap} label="Output gap" initial={DEFAULT.output_gap} min={0} max={MAX_GAP} unit="gap"/>
+                                <NumberField node={outputs} label="Outputs" initial={DEFAULT.outputs} {onblur}/>
+                                {spacing_slider(output_spacing, "Output spacing", counts.output_spacing, on_spacing)}
                             </div>
                         </div>
                         <div class="setting">
@@ -335,7 +337,7 @@ pub(crate) fn Balancers() -> Html {
                         </div>
                     </div>
                     <div class="settings-details">
-                        <span>{"Gap in empty tiles between belts. "}<strong>{"0"}</strong>{" puts belts side by side."}</span>
+                        <span>{"Spacing in empty tiles between belts. "}<strong>{"0"}</strong>{" puts belts side by side."}</span>
                     </div>
                 </form>
 
@@ -370,7 +372,7 @@ pub(crate) fn Balancers() -> Html {
                         }
                     </section>
                 } else {
-                    <p class="calculation-error" role="alert">{"Choose valid belt counts and gaps to generate a blueprint."}</p>
+                    <p class="calculation-error" role="alert">{"Choose valid belt counts and spacing to generate a blueprint."}</p>
                 }
 
                 <details class="belt-graphics">
@@ -399,9 +401,7 @@ struct NumberFieldProps {
     node: NodeRef,
     label: AttrValue,
     initial: usize,
-    min: usize,
-    max: usize,
-    unit: AttrValue,
+    onblur: Callback<FocusEvent>,
 }
 
 #[function_component]
@@ -417,9 +417,26 @@ fn NumberField(props: &NumberFieldProps) -> Html {
         <label class="rate-control belt-number">
             <span class="sr-only">{props.label.clone()}</span>
             <input ref={props.node.clone()} type="number" inputmode="numeric"
-                min={props.min.to_string()} max={props.max.to_string()} step="1"
-                value={(*value).clone()} {oninput} required={true}/>
-            <span class="input-unit" aria-hidden="true">{props.unit.clone()}</span>
+                min="1" max={MAX_LANES.to_string()} step="1" value={(*value).clone()}
+                {oninput} onblur={props.onblur.clone()} required={true}/>
+            <span class="input-unit" aria-hidden="true">{"belts"}</span>
+        </label>
+    }
+}
+
+fn spacing_slider(
+    node: NodeRef,
+    label: &'static str,
+    value: usize,
+    oninput: Callback<InputEvent>,
+) -> Html {
+    let unit = if value == 1 { "tile" } else { "tiles" };
+    html! {
+        <label class="belt-spacing">
+            <span aria-hidden="true">{"Spacing"}</span>
+            <strong aria-hidden="true">{value}</strong>
+            <input ref={node} type="range" min="0" max={MAX_SPACING.to_string()} step="1"
+                value={value.to_string()} aria-label={label} aria-valuetext={format!("{value} empty {unit}")} {oninput}/>
         </label>
     }
 }

@@ -289,6 +289,18 @@ input[aria-invalid="true"] { outline: 2px solid #fe896e; outline-offset: -2px; }
 .graph-viewport[data-panning], .graph-viewport[data-panning] .node-card { cursor: grabbing; }
 
 .belt-number input { padding-right: 43px; }
+.belt-number input:user-invalid { outline: 2px solid #fe896e; outline-offset: -2px; }
+.belt-spacing {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  min-width: 0;
+  gap: 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.belt-spacing strong { color: var(--accent); font-variant-numeric: tabular-nums; }
+.belt-spacing input { grid-column: 1 / -1; width: 100%; margin: 0; accent-color: var(--accent); }
 .belt-zoom select { padding-left: 10px; }
 .belt-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .belt-actions button { min-height: 42px; }
