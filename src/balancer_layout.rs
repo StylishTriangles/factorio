@@ -627,10 +627,14 @@ mod tests {
                 .parts
                 .iter()
                 .filter(|part| part.x == x)
-                .map(|part| {
-                    assert_eq!(part.kind, Kind::Belt);
+                .flat_map(|part| {
                     assert_eq!(part.direction, EAST);
-                    part.y
+                    let lanes = match part.kind {
+                        Kind::Belt => 1,
+                        Kind::Splitter if gap == 0 => 2,
+                        _ => panic!("invalid port at {x},{}", part.y),
+                    };
+                    part.y..part.y + lanes
                 })
                 .collect();
             edge_rows.sort_unstable();
@@ -780,8 +784,15 @@ mod tests {
     #[test]
     fn compact_expansion_stays_smaller_with_the_same_ports() {
         let layout = get_layout_variant(24, 32, 0, 0, true).unwrap();
-        assert_eq!((layout.width, layout.height), (37, 32));
-        assert_eq!(layout.parts.len(), 903);
+        assert_eq!((layout.width, layout.height), (25, 32));
+        assert_eq!(layout.parts.len(), 575);
+        assert!(
+            layout
+                .parts
+                .iter()
+                .filter(|part| part.x == 0 || part.x == layout.width - 1)
+                .all(|part| part.kind == Kind::Splitter)
+        );
         check_tracks(&layout);
 
         for input_gap in 0..=MAX_GAP {

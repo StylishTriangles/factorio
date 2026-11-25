@@ -9,7 +9,7 @@ mod square_24;
 
 pub(super) fn generate(inputs: usize, outputs: usize, compact_expansion: bool) -> Option<Layout> {
     if (inputs, outputs) == (24, 32) && compact_expansion {
-        return compact_expansion::generate();
+        return Some(compact_expansion::generate());
     }
     if inputs == 24 && matches!(outputs, 16 | 32) {
         return rectangular::generate(outputs as i32);
