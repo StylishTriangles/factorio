@@ -3,7 +3,12 @@ use super::{
     east_belts, push_belt,
 };
 
+mod rectangular;
+
 pub(super) fn generate(inputs: usize, outputs: usize) -> Option<Layout> {
+    if (inputs, outputs) == (24, 16) {
+        return rectangular::generate();
+    }
     if inputs != outputs || inputs == 0 || !inputs.is_multiple_of(2) {
         return None;
     }
