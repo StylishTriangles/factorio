@@ -750,6 +750,21 @@ mod tests {
         }
     }
 
+    #[test]
+    fn dense_24_to_24_packs_the_same_number_of_belts_into_less_space() {
+        let layout = get_layout(24, 24, 0, 0).unwrap();
+        assert_eq!(layout.height, 24);
+        assert!(layout.width <= 61 && layout.parts.len() <= 1_299);
+        check_tracks(&layout);
+
+        for input_gap in 0..=MAX_GAP {
+            for output_gap in 0..=MAX_GAP {
+                let layout = get_layout(24, 24, input_gap, output_gap).unwrap();
+                check_geometry(&layout, 24, 24, (input_gap, output_gap));
+            }
+        }
+    }
+
     fn check_tracks(layout: &Layout) {
         let mut tiles = HashMap::new();
         for (id, part) in layout.parts.iter().enumerate() {

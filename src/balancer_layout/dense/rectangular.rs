@@ -1,4 +1,4 @@
-use super::{connect_row, underground};
+use super::{append_seed_groups, connect_row, shaft, splitter, underground};
 use crate::balancer_layout::{
     EAST, Kind, Layout, NORTH, PATTERNS, Part, SOUTH, compact_layout, push_belt,
 };
@@ -93,35 +93,4 @@ pub(super) fn generate() -> Option<Layout> {
         parts,
         ..Layout::default()
     })
-}
-
-fn append_seed_groups(parts: &mut Vec<Part>, seed: &Layout, groups: i32, x: i32) {
-    for group in 0..groups {
-        parts.extend(
-            seed.parts
-                .iter()
-                .filter(|part| x == 0 || part.x != 0)
-                .map(|part| Part {
-                    x: part.x + x,
-                    y: part.y + group * seed.height,
-                    ..*part
-                }),
-        );
-    }
-}
-
-fn splitter(parts: &mut Vec<Part>, x: i32, y: i32) {
-    parts.push(Part {
-        x,
-        y,
-        direction: EAST,
-        kind: Kind::Splitter,
-    });
-}
-
-fn shaft(parts: &mut Vec<Part>, x: i32, from: i32, to: i32, direction: u8) {
-    let step = if direction == NORTH { -1 } else { 1 };
-    push_belt(parts, x, from, direction);
-    underground(parts, (x, from + step), (x, to - step), direction);
-    push_belt(parts, x, to, EAST);
 }

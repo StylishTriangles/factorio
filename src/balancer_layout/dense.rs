@@ -4,6 +4,7 @@ use super::{
 };
 
 mod rectangular;
+mod square_24;
 
 pub(super) fn generate(inputs: usize, outputs: usize) -> Option<Layout> {
     if (inputs, outputs) == (24, 16) {
@@ -12,16 +13,15 @@ pub(super) fn generate(inputs: usize, outputs: usize) -> Option<Layout> {
     if inputs != outputs || inputs == 0 || !inputs.is_multiple_of(2) {
         return None;
     }
-    let mut layout = square(inputs)?;
+    let mut layout = if inputs == 24 {
+        square_24::generate().or_else(|| square(inputs))?
+    } else {
+        square(inputs)?
+    };
     // Mix adjacent outlet pairs so alternating blocked outlets still leave an
     // exit for every route through the paired halves.
     for y in (0..layout.height).step_by(2) {
-        layout.parts.push(Part {
-            x: layout.width,
-            y,
-            kind: Kind::Splitter,
-            direction: EAST,
-        });
+        splitter(&mut layout.parts, layout.width, y);
     }
     for y in 0..layout.height {
         push_belt(&mut layout.parts, layout.width + 1, y, EAST);
@@ -182,4 +182,35 @@ fn underground(parts: &mut Vec<Part>, entry: (i32, i32), exit: (i32, i32), direc
             direction,
         });
     }
+}
+
+fn append_seed_groups(parts: &mut Vec<Part>, seed: &Layout, groups: i32, x: i32) {
+    for group in 0..groups {
+        parts.extend(
+            seed.parts
+                .iter()
+                .filter(|part| x == 0 || part.x != 0)
+                .map(|part| Part {
+                    x: part.x + x,
+                    y: part.y + group * seed.height,
+                    ..*part
+                }),
+        );
+    }
+}
+
+fn splitter(parts: &mut Vec<Part>, x: i32, y: i32) {
+    parts.push(Part {
+        x,
+        y,
+        direction: EAST,
+        kind: Kind::Splitter,
+    });
+}
+
+fn shaft(parts: &mut Vec<Part>, x: i32, from: i32, to: i32, direction: u8) {
+    let step = if direction == NORTH { -1 } else { 1 };
+    push_belt(parts, x, from, direction);
+    underground(parts, (x, from + step), (x, to - step), direction);
+    push_belt(parts, x, to, EAST);
 }
