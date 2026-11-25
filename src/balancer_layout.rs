@@ -16,6 +16,7 @@ type Tile = (i32, i32);
 // Factorio-SAT books/blue_narrow.txt (blob bb6b24caf70662973450417a8796d036677e382d).
 // https://github.com/R-O-C-K-E-T/Factorio-SAT/blob/main/books/blue_narrow.txt
 // Compact layouts are GPL-3.0. See site/balancers/layouts.LICENSE.txt.
+// The 5→3 and 8→4 catalog layouts are omitted because subsets of inputs bottleneck even with all outputs open.
 static PATTERNS: LazyLock<HashMap<String, Vec<String>>> = LazyLock::new(|| {
     serde_json::from_str(include_str!("../data/balancer_layouts.json"))
         .expect("embedded balancer patterns must be valid JSON")
@@ -149,53 +150,46 @@ fn splitter_column(
     output_open: impl Fn(usize) -> bool,
 ) -> i32 {
     for lane in (0..capacity).step_by(2) {
+        let upper_input = input_open(lane);
+        let lower_input = input_open(lane + 1);
+        let upper_output = output_open(lane);
+        let lower_output = output_open(lane + 1);
+        if !(upper_input || lower_input || upper_output || lower_output) {
+            continue;
+        }
         let upper = lane_row(lane, bank);
         let lower = lane_row(lane + 1, bank);
         parts.push(Part {
-            x: x + 2,
+            x: x + 1,
             y: upper,
             kind: Kind::Splitter,
             direction: EAST,
         });
-        if input_open(lane) {
-            east_belts(parts, x, x + 2, upper);
+        if upper_input {
+            push_belt(parts, x, upper, EAST);
         }
-        if input_open(lane + 1) {
-            push_belt(parts, x, lower, EAST);
+        if lower_input {
             for y in (upper + 2..=lower).rev() {
-                push_belt(parts, x + 1, y, NORTH);
+                push_belt(parts, x, y, NORTH);
             }
-            push_belt(parts, x + 1, upper + 1, EAST);
+            push_belt(parts, x, upper + 1, EAST);
         }
-        if output_open(lane) {
-            east_belts(parts, x + 3, x + 5, upper);
+        if upper_output {
+            push_belt(parts, x + 2, upper, EAST);
         }
-        if output_open(lane + 1) {
+        if lower_output {
             for y in upper + 1..lower {
-                push_belt(parts, x + 3, y, SOUTH);
+                push_belt(parts, x + 2, y, SOUTH);
             }
-            east_belts(parts, x + 3, x + 5, lower);
+            push_belt(parts, x + 2, lower, EAST);
         }
     }
-    x + 5
+    x + 3
 }
 
-fn connect_columns(
-    parts: &mut Vec<Part>,
-    x: i32,
-    bank: usize,
-    capacity: usize,
-    source_bit: usize,
-    target_bit: usize,
-) -> i32 {
+fn connect_columns(parts: &mut Vec<Part>, x: i32, tracks: impl Iterator<Item = (i32, i32)>) -> i32 {
     // Interleaved row banks leave space to tunnel under horizontal belts.
-    let mut wires: Vec<_> = (0..capacity)
-        .map(|index| {
-            let from = lane_row(lane_for(index, source_bit), bank);
-            let to = lane_row(lane_for(index, target_bit), 1 - bank);
-            (from, to, 0)
-        })
-        .collect();
+    let mut wires: Vec<_> = tracks.map(|(from, to)| (from, to, 0)).collect();
     wires.sort_unstable_by_key(|(from, to, _)| (*from).min(*to));
     let mut bottoms = Vec::new();
     let mut bends = HashMap::new();
@@ -212,12 +206,12 @@ fn connect_columns(
                 bottoms.len() - 1
             }
         };
-        *turn_x = x + 1 + column as i32;
+        *turn_x = x + column as i32;
         bends.insert(*from, (*turn_x, true));
         bends.insert(*to, (*turn_x, false));
     }
 
-    let end = x + bottoms.len() as i32 + 2;
+    let end = x + bottoms.len() as i32;
     for (from, to, turn_x) in wires {
         east_belts(parts, x, turn_x, from);
         east_belts(parts, turn_x + 1, end, to);
@@ -264,6 +258,40 @@ fn connect_columns(
     end
 }
 
+fn lane_mask(count: usize) -> u64 {
+    u64::MAX >> (u64::BITS as usize - count)
+}
+
+fn has_lane(mask: u64, lane: usize) -> bool {
+    mask & (1 << lane) != 0
+}
+
+fn through_splitters(mut lanes: u64, bit: usize, capacity: usize) -> u64 {
+    for lane in 0..capacity {
+        if has_lane(lanes, lane) {
+            lanes |= 1 << (lane ^ (1 << bit));
+        }
+    }
+    lanes
+}
+
+fn connected_lanes(stages: &[usize], capacity: usize, inputs: u64, outputs: u64) -> Vec<u64> {
+    // Route only wires that an input can reach and that can reach an output.
+    let mut live = vec![0; stages.len() + 1];
+    live[0] = inputs;
+    for (stage, &bit) in stages.iter().enumerate() {
+        live[stage + 1] = through_splitters(live[stage], bit, capacity);
+    }
+
+    let mut upstream = outputs;
+    live[stages.len()] &= outputs;
+    for (stage, &bit) in stages.iter().enumerate().rev() {
+        upstream = through_splitters(upstream, bit, capacity);
+        live[stage] &= upstream;
+    }
+    live
+}
+
 // Splitter columns connect pairs differing in one bit. The reverse columns
 // form a Beneš network when reducing the number of external belts.
 fn square(
@@ -286,25 +314,56 @@ fn square(
     if reverse_stages {
         stages.extend((0..bits - 1).rev());
     }
+    let feedback_lanes = lane_mask(capacity) ^ lane_mask(size);
+    let live = connected_lanes(
+        &stages,
+        capacity,
+        lane_mask(open_inputs) | feedback_lanes,
+        lane_mask(open_outputs) | feedback_lanes,
+    );
 
     let first = start + feedback as i32 + 1;
     let mut x = first;
-    let mut bank = 0;
+    let mut previous_rows = [0; MAX_LANES];
     for (stage, &bit) in stages.iter().enumerate() {
+        let bank = stage % 2;
+        let mut order = vec![0; capacity];
+        for lane in 0..capacity {
+            order[lane_for(lane, bit)] = lane;
+        }
+        if reverse_stages {
+            let used = live[stage] | live[stage + 1];
+            order = order
+                .as_chunks::<2>()
+                .0
+                .iter()
+                .filter(|pair| pair.iter().any(|&lane| has_lane(used, lane)))
+                .flatten()
+                .copied()
+                .collect();
+        }
+        let mut rows = [0; MAX_LANES];
+        for (lane, &logical) in order.iter().enumerate() {
+            rows[logical] = lane_row(lane, bank);
+        }
         if stage > 0 {
-            x = connect_columns(parts, x, bank, capacity, stages[stage - 1], bit);
-            bank = 1 - bank;
+            let tracks = (0..capacity)
+                .filter(|&lane| has_lane(live[stage], lane))
+                .map(|lane| (previous_rows[lane], rows[lane]));
+            x = connect_columns(parts, x, tracks);
         }
         x = splitter_column(
             parts,
             x,
             bank,
-            capacity,
-            |lane| stage > 0 || lane < open_inputs || lane >= size,
-            |lane| stage + 1 < stages.len() || lane < open_outputs || lane >= size,
+            order.len(),
+            |lane| has_lane(live[stage], order[lane]),
+            |lane| has_lane(live[stage + 1], order[lane]),
         );
+        previous_rows = rows;
     }
 
+    let bank = (stages.len() - 1) % 2;
     let end = x + feedback as i32 + 1;
     for lane in 0..open_inputs {
         east_belts(parts, start, first, lane_row(lane, 0));
@@ -339,9 +398,8 @@ fn square(
 
 fn generate_layout(inputs: usize, outputs: usize) -> Layout {
     let mut parts = Vec::new();
-    let mut start = 0;
-    if inputs > outputs {
-        start = square(
+    let reduction = (inputs > outputs).then(|| {
+        square(
             &mut parts,
             0,
             inputs.next_power_of_two(),
@@ -349,16 +407,20 @@ fn generate_layout(inputs: usize, outputs: usize) -> Layout {
             outputs,
             true,
         )
-        .0 + 1;
-    }
-    let (end, bank) = square(
-        &mut parts,
-        start,
-        outputs,
-        inputs.min(outputs),
-        outputs,
-        false,
-    );
+    });
+    // For a power-of-two output count, the final reverse columns already
+    // balance exactly those outlets as a square butterfly.
+    let (end, bank) = match reduction {
+        Some(reduction) if outputs.is_power_of_two() => reduction,
+        _ => square(
+            &mut parts,
+            reduction.map_or(0, |(end, _)| end + 1),
+            outputs,
+            inputs.min(outputs),
+            outputs,
+            false,
+        ),
+    };
     let height = parts
         .iter()
         .map(|part| part.y + if part.kind == Kind::Splitter { 2 } else { 1 })
@@ -628,6 +690,69 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn reduction_only_places_tracks_between_real_ports() {
+        for gaps in [(0, 0), (1, 2)] {
+            let layout = get_layout(12, 4, gaps.0, gaps.1).unwrap();
+            check_geometry(&layout, 12, 4, gaps);
+            assert!(layout.width <= 56 && layout.height <= 63 && layout.parts.len() <= 1_256);
+
+            let mut tiles = HashMap::new();
+            for (id, part) in layout.parts.iter().enumerate() {
+                tiles.insert((part.x, part.y), id);
+                if part.kind == Kind::Splitter {
+                    let (dx, dy) = DIRECTIONS[part.direction as usize];
+                    tiles.insert((part.x + dy.abs(), part.y + dx.abs()), id);
+                }
+            }
+            let tunnel_ends: HashMap<_, _> = layout.tunnels.iter().copied().collect();
+            let mut downstream = vec![Vec::new(); layout.parts.len()];
+            let mut upstream = vec![Vec::new(); layout.parts.len()];
+            for (id, part) in layout.parts.iter().enumerate() {
+                let (dx, dy) = DIRECTIONS[part.direction as usize];
+                let mut connect = |tile: Tile| {
+                    if let Some(&target) = tiles.get(&tile) {
+                        downstream[id].push(target);
+                        upstream[target].push(id);
+                    }
+                };
+                if part.kind == Kind::Input {
+                    connect(tunnel_ends[&(part.x, part.y)]);
+                } else {
+                    connect((part.x + dx, part.y + dy));
+                    if part.kind == Kind::Splitter {
+                        connect((part.x + dx + dy.abs(), part.y + dy + dx.abs()));
+                    }
+                }
+            }
+
+            let inputs = layout.input_rows.iter().map(|&row| tiles[&(0, row)]);
+            let outputs: Vec<_> = layout
+                .output_rows
+                .iter()
+                .map(|&row| tiles[&(layout.width - 1, row)])
+                .collect();
+            let mut supplied = HashSet::new();
+            for input in inputs {
+                let seen = reachable(&downstream, vec![input]);
+                assert!(outputs.iter().all(|output| seen.contains(output)));
+                supplied.extend(seen);
+            }
+            assert_eq!(supplied.len(), layout.parts.len());
+            assert_eq!(reachable(&upstream, outputs).len(), layout.parts.len());
+        }
+    }
+
+    fn reachable(edges: &[Vec<usize>], mut to_visit: Vec<usize>) -> HashSet<usize> {
+        let mut reached = HashSet::new();
+        while let Some(id) = to_visit.pop() {
+            if reached.insert(id) {
+                to_visit.extend(&edges[id]);
+            }
+        }
+        reached
     }
 
     #[test]
