@@ -22,6 +22,16 @@ pub fn center_view(viewport: &NodeRef) {
 pub struct GraphViewportProps {
     pub viewport: NodeRef,
     pub children: Children,
+    #[prop_or(AttrValue::Static("Scrollable recipe graph"))]
+    pub label: AttrValue,
+    #[prop_or(AttrValue::Static("graph-instructions"))]
+    pub instructions: AttrValue,
+    #[prop_or(true)]
+    pub center_on_mount: bool,
+    #[prop_or_default]
+    pub class: Classes,
+    #[prop_or_default]
+    pub onscroll: Callback<Event>,
 }
 
 #[function_component]
@@ -30,7 +40,11 @@ pub fn GraphViewport(props: &GraphViewportProps) -> Html {
 
     {
         let viewport = props.viewport.clone();
-        use_effect_with((), move |_| center_view(&viewport));
+        use_effect_with(props.center_on_mount, move |center| {
+            if *center {
+                center_view(&viewport);
+            }
+        });
     }
 
     let onpointerdown = {
@@ -124,9 +138,10 @@ pub fn GraphViewport(props: &GraphViewportProps) -> Html {
     };
 
     html! {
-        <div class="graph-viewport" tabindex="0" role="region" aria-label="Scrollable recipe graph"
-            aria-describedby="graph-instructions"
+        <div class={classes!("graph-viewport", props.class.clone())} tabindex="0" role="region"
+            aria-label={props.label.clone()} aria-describedby={props.instructions.clone()}
             ref={props.viewport.clone()} style={format!("--pan-inset: {PAN_INSET}px")}
+            onscroll={props.onscroll.clone()}
             {onpointerdown} {onpointermove} {onpointerleave} onpointerup={finish.clone()}
             onpointercancel={finish.clone()} onlostpointercapture={finish}
             ondragstart={Callback::from(|event: DragEvent| event.prevent_default())}>

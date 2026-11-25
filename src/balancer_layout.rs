@@ -1,0 +1,640 @@
+use std::collections::HashMap;
+use std::sync::LazyLock;
+
+pub const MAX_LANES: usize = 64;
+pub const MAX_GAP: usize = 4;
+
+const NORTH: u8 = 0;
+const EAST: u8 = 1;
+const SOUTH: u8 = 2;
+const WEST: u8 = 3;
+const DIRECTIONS: [Tile; 4] = [(0, -1), (1, 0), (0, 1), (-1, 0)];
+const EXPRESS_TUNNEL_SPAN: i32 = 9;
+
+type Tile = (i32, i32);
+
+// Factorio-SAT books/blue_narrow.txt (blob bb6b24caf70662973450417a8796d036677e382d).
+// https://github.com/R-O-C-K-E-T/Factorio-SAT/blob/main/books/blue_narrow.txt
+// Compact layouts are GPL-3.0. See site/balancers/layouts.LICENSE.txt.
+static PATTERNS: LazyLock<HashMap<String, Vec<String>>> = LazyLock::new(|| {
+    serde_json::from_str(include_str!("../data/balancer_layouts.json"))
+        .expect("embedded balancer patterns must be valid JSON")
+});
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Kind {
+    Belt,
+    Splitter,
+    Input,
+    Output,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Part {
+    pub x: i32,
+    pub y: i32,
+    pub kind: Kind,
+    pub direction: u8,
+}
+
+#[derive(Debug, Default)]
+pub struct Layout {
+    pub width: i32,
+    pub height: i32,
+    pub parts: Vec<Part>,
+    pub input_rows: Vec<i32>,
+    pub output_rows: Vec<i32>,
+    pub feeds: HashMap<Tile, Vec<u8>>,
+    pub tunnels: Vec<(Tile, Tile)>,
+}
+
+pub fn get_layout(
+    inputs: usize,
+    outputs: usize,
+    input_gap: usize,
+    output_gap: usize,
+) -> Option<Layout> {
+    if !(1..=MAX_LANES).contains(&inputs)
+        || !(1..=MAX_LANES).contains(&outputs)
+        || input_gap > MAX_GAP
+        || output_gap > MAX_GAP
+    {
+        return None;
+    }
+
+    let mut layout = match PATTERNS.get(&format!("{inputs}x{outputs}")) {
+        Some(pattern) => compact_layout(pattern),
+        None => generate_layout(inputs, outputs),
+    };
+    route_ports(&mut layout, input_gap, output_gap);
+    index_tracks(&mut layout);
+    Some(layout)
+}
+
+fn compact_layout(pattern: &[String]) -> Layout {
+    let width = pattern[0].split_ascii_whitespace().count() as i32;
+    let mut layout = Layout {
+        width,
+        height: pattern.len() as i32,
+        ..Layout::default()
+    };
+
+    for (y, row) in pattern.iter().enumerate() {
+        let y = y as i32;
+        for (x, tile) in row.split_ascii_whitespace().enumerate() {
+            if matches!(tile, "." | "s") {
+                continue;
+            }
+            let x = x as i32;
+            let kind = match tile.as_bytes()[0] {
+                b'S' => Kind::Splitter,
+                b'i' => Kind::Input,
+                b'o' => Kind::Output,
+                _ => Kind::Belt,
+            };
+            let direction = match tile.as_bytes().last() {
+                Some(b'^') => NORTH,
+                Some(b'>') => EAST,
+                Some(b'v') => SOUTH,
+                Some(b'<') => WEST,
+                _ => unreachable!("embedded pattern has invalid direction"),
+            };
+            layout.parts.push(Part {
+                x,
+                y,
+                kind,
+                direction,
+            });
+            if x == 0 {
+                layout.input_rows.push(y);
+            }
+            if x == width - 1 {
+                layout.output_rows.push(y);
+            }
+        }
+    }
+    layout
+}
+
+fn push_belt(parts: &mut Vec<Part>, x: i32, y: i32, direction: u8) {
+    parts.push(Part {
+        x,
+        y,
+        direction,
+        kind: Kind::Belt,
+    });
+}
+
+fn east_belts(parts: &mut Vec<Part>, from: i32, to: i32, y: i32) {
+    for x in from..to {
+        push_belt(parts, x, y, EAST);
+    }
+}
+
+fn lane_row(lane: usize, bank: usize) -> i32 {
+    (4 * lane + 2 * bank) as i32
+}
+
+fn lane_for(index: usize, bit: usize) -> usize {
+    let low_bits = (1 << bit) - 1;
+    (index & !(low_bits * 2 + 1)) | ((index & low_bits) << 1) | ((index >> bit) & 1)
+}
+
+fn splitter_column(
+    parts: &mut Vec<Part>,
+    x: i32,
+    bank: usize,
+    capacity: usize,
+    input_open: impl Fn(usize) -> bool,
+    output_open: impl Fn(usize) -> bool,
+) -> i32 {
+    for lane in (0..capacity).step_by(2) {
+        let upper = lane_row(lane, bank);
+        let lower = lane_row(lane + 1, bank);
+        parts.push(Part {
+            x: x + 2,
+            y: upper,
+            kind: Kind::Splitter,
+            direction: EAST,
+        });
+        if input_open(lane) {
+            east_belts(parts, x, x + 2, upper);
+        }
+        if input_open(lane + 1) {
+            push_belt(parts, x, lower, EAST);
+            for y in (upper + 2..=lower).rev() {
+                push_belt(parts, x + 1, y, NORTH);
+            }
+            push_belt(parts, x + 1, upper + 1, EAST);
+        }
+        if output_open(lane) {
+            east_belts(parts, x + 3, x + 5, upper);
+        }
+        if output_open(lane + 1) {
+            for y in upper + 1..lower {
+                push_belt(parts, x + 3, y, SOUTH);
+            }
+            east_belts(parts, x + 3, x + 5, lower);
+        }
+    }
+    x + 5
+}
+
+fn connect_columns(
+    parts: &mut Vec<Part>,
+    x: i32,
+    bank: usize,
+    capacity: usize,
+    source_bit: usize,
+    target_bit: usize,
+) -> i32 {
+    // Interleaved row banks leave space to tunnel under horizontal belts.
+    let mut wires: Vec<_> = (0..capacity)
+        .map(|index| {
+            let from = lane_row(lane_for(index, source_bit), bank);
+            let to = lane_row(lane_for(index, target_bit), 1 - bank);
+            (from, to, 0)
+        })
+        .collect();
+    wires.sort_unstable_by_key(|(from, to, _)| (*from).min(*to));
+    let mut bottoms = Vec::new();
+    let mut bends = HashMap::new();
+    for (from, to, turn_x) in &mut wires {
+        let top = (*from).min(*to);
+        let bottom = (*from).max(*to);
+        let column = match bottoms.iter().position(|last| *last < top) {
+            Some(column) => {
+                bottoms[column] = bottom;
+                column
+            }
+            None => {
+                bottoms.push(bottom);
+                bottoms.len() - 1
+            }
+        };
+        *turn_x = x + 1 + column as i32;
+        bends.insert(*from, (*turn_x, true));
+        bends.insert(*to, (*turn_x, false));
+    }
+
+    let end = x + bottoms.len() as i32 + 2;
+    for (from, to, turn_x) in wires {
+        east_belts(parts, x, turn_x, from);
+        east_belts(parts, turn_x + 1, end, to);
+        let step = (to - from).signum();
+        let heading = if step > 0 { SOUTH } else { NORTH };
+        let crosses = |y| {
+            y > from.min(to)
+                && y < from.max(to)
+                && bends.get(&y).is_some_and(
+                    |&(at, source)| {
+                        if source { turn_x < at } else { turn_x > at }
+                    },
+                )
+        };
+        let mut y = from;
+        while y != to {
+            if crosses(y + step) {
+                // Two close crossings share one tunnel so their endpoints can't overlap.
+                let mut exit = y + 2 * step;
+                while crosses(exit) || crosses(exit + step) {
+                    exit += step;
+                }
+                debug_assert!(exit != to && (exit - y).abs() <= EXPRESS_TUNNEL_SPAN);
+                parts.push(Part {
+                    x: turn_x,
+                    y,
+                    kind: Kind::Input,
+                    direction: heading,
+                });
+                parts.push(Part {
+                    x: turn_x,
+                    y: exit,
+                    kind: Kind::Output,
+                    direction: heading,
+                });
+                y = exit;
+            } else {
+                push_belt(parts, turn_x, y, heading);
+            }
+            y += step;
+        }
+        push_belt(parts, turn_x, to, EAST);
+    }
+    end
+}
+
+// Splitter columns connect pairs differing in one bit. The reverse columns
+// form a Beneš network when reducing the number of external belts.
+fn square(
+    parts: &mut Vec<Part>,
+    start: i32,
+    size: usize,
+    open_inputs: usize,
+    open_outputs: usize,
+    reverse_stages: bool,
+) -> (i32, usize) {
+    if size == 1 {
+        east_belts(parts, start, start + 3, 0);
+        return (start + 2, 0);
+    }
+
+    let capacity = size.next_power_of_two();
+    let feedback = capacity - size;
+    let bits = capacity.ilog2() as usize;
+    let mut stages: Vec<_> = (0..bits).collect();
+    if reverse_stages {
+        stages.extend((0..bits - 1).rev());
+    }
+
+    let first = start + feedback as i32 + 1;
+    let mut x = first;
+    let mut bank = 0;
+    for (stage, &bit) in stages.iter().enumerate() {
+        if stage > 0 {
+            x = connect_columns(parts, x, bank, capacity, stages[stage - 1], bit);
+            bank = 1 - bank;
+        }
+        x = splitter_column(
+            parts,
+            x,
+            bank,
+            capacity,
+            |lane| stage > 0 || lane < open_inputs || lane >= size,
+            |lane| stage + 1 < stages.len() || lane < open_outputs || lane >= size,
+        );
+    }
+
+    let end = x + feedback as i32 + 1;
+    for lane in 0..open_inputs {
+        east_belts(parts, start, first, lane_row(lane, 0));
+    }
+    for lane in 0..open_outputs {
+        east_belts(parts, x, end + 1, lane_row(lane, bank));
+    }
+
+    // Each surplus output wraps beneath the network to its corresponding input.
+    for index in 0..feedback {
+        let lane = size + index;
+        let inlet = lane_row(lane, 0);
+        let outlet = lane_row(lane, bank);
+        let left = start + 1 + index as i32;
+        let right = end - 1 - index as i32;
+        let bottom = lane_row(capacity, bank) + (feedback - index) as i32;
+        east_belts(parts, x, right, outlet);
+        for y in outlet..bottom {
+            push_belt(parts, right, y, SOUTH);
+        }
+        for column in (left + 1..=right).rev() {
+            push_belt(parts, column, bottom, WEST);
+        }
+        for y in (inlet + 1..=bottom).rev() {
+            push_belt(parts, left, y, NORTH);
+        }
+        east_belts(parts, left, first, inlet);
+    }
+
+    (end, bank)
+}
+
+fn generate_layout(inputs: usize, outputs: usize) -> Layout {
+    let mut parts = Vec::new();
+    let mut start = 0;
+    if inputs > outputs {
+        start = square(
+            &mut parts,
+            0,
+            inputs.next_power_of_two(),
+            inputs,
+            outputs,
+            true,
+        )
+        .0 + 1;
+    }
+    let (end, bank) = square(
+        &mut parts,
+        start,
+        outputs,
+        inputs.min(outputs),
+        outputs,
+        false,
+    );
+    let height = parts
+        .iter()
+        .map(|part| part.y + if part.kind == Kind::Splitter { 2 } else { 1 })
+        .max()
+        .expect("generated layout has at least one belt");
+
+    Layout {
+        width: end + 1,
+        height,
+        parts,
+        input_rows: (0..inputs).map(|lane| lane_row(lane, 0)).collect(),
+        output_rows: (0..outputs).map(|lane| lane_row(lane, bank)).collect(),
+        ..Layout::default()
+    }
+}
+
+struct PortRoutes {
+    rows: Vec<i32>,
+    bends: Vec<i32>,
+    width: i32,
+}
+
+impl PortRoutes {
+    fn new(track_rows: &[i32], gap: usize) -> Self {
+        let pitch = gap as i32 + 1;
+        let span = (track_rows.len() as i32 - 1) * pitch;
+        let top = (track_rows[0] + track_rows[track_rows.len() - 1] - span).div_euclid(2);
+        let rows: Vec<_> = (0..track_rows.len())
+            .map(|lane| top + lane as i32 * pitch)
+            .collect();
+
+        // Overlapping bends turn from the outside in; disjoint ones can share a column.
+        let mut bends = vec![0; rows.len()];
+        for lane in (0..rows.len()).rev() {
+            if rows[lane] >= track_rows[lane] {
+                continue;
+            }
+            let mut bend = 1;
+            for lower in lane + 1..rows.len() {
+                if rows[lower] > track_rows[lane] {
+                    break;
+                }
+                bend = bend.max(bends[lower] + 1);
+            }
+            bends[lane] = bend;
+        }
+        for lane in 0..rows.len() {
+            if rows[lane] <= track_rows[lane] {
+                continue;
+            }
+            let mut bend = 1;
+            for upper in (0..lane).rev() {
+                if rows[upper] < track_rows[lane] {
+                    break;
+                }
+                bend = bend.max(bends[upper] + 1);
+            }
+            bends[lane] = bend;
+        }
+        let bend = bends.iter().copied().max().unwrap_or_default();
+        let width = if bend == 0 { 0 } else { bend + 1 };
+        Self { rows, bends, width }
+    }
+
+    fn append(&self, parts: &mut Vec<Part>, track_rows: &[i32], left: bool, boundary: i32) {
+        for (lane, &track_row) in track_rows.iter().enumerate() {
+            let port_row = self.rows[lane];
+            let bend = self.bends[lane];
+            for column in 0..self.width {
+                let x = if left {
+                    column
+                } else {
+                    boundary + self.width - 1 - column
+                };
+                if bend == column && port_row != track_row {
+                    let (from, to) = if left {
+                        (port_row, track_row)
+                    } else {
+                        (track_row, port_row)
+                    };
+                    let heading = if from < to { SOUTH } else { NORTH };
+                    for y in from.min(to)..=from.max(to) {
+                        push_belt(parts, x, y, if y == to { EAST } else { heading });
+                    }
+                } else {
+                    let y = if column < bend { port_row } else { track_row };
+                    push_belt(parts, x, y, EAST);
+                }
+            }
+        }
+    }
+}
+
+fn route_ports(layout: &mut Layout, input_gap: usize, output_gap: usize) {
+    let inputs = PortRoutes::new(&layout.input_rows, input_gap);
+    let outputs = PortRoutes::new(&layout.output_rows, output_gap);
+
+    for part in &mut layout.parts {
+        part.x += inputs.width;
+    }
+    inputs.append(&mut layout.parts, &layout.input_rows, true, 0);
+    outputs.append(
+        &mut layout.parts,
+        &layout.output_rows,
+        false,
+        layout.width + inputs.width,
+    );
+
+    let top = inputs.rows[0].min(outputs.rows[0]).min(0);
+    if top < 0 {
+        for part in &mut layout.parts {
+            part.y -= top;
+        }
+    }
+    layout.width += inputs.width + outputs.width;
+    layout.height = layout
+        .height
+        .max(inputs.rows[inputs.rows.len() - 1] + 1)
+        .max(outputs.rows[outputs.rows.len() - 1] + 1)
+        - top;
+    layout.input_rows = inputs.rows.into_iter().map(|row| row - top).collect();
+    layout.output_rows = outputs.rows.into_iter().map(|row| row - top).collect();
+}
+
+fn index_tracks(layout: &mut Layout) {
+    let mut exits = HashMap::new();
+    for part in &layout.parts {
+        let (dx, dy) = DIRECTIONS[part.direction as usize];
+        match part.kind {
+            Kind::Input => continue,
+            Kind::Output => {
+                exits.insert((part.x, part.y, part.direction), (part.x, part.y));
+            }
+            _ => {}
+        }
+        let lanes = if part.kind == Kind::Splitter { 2 } else { 1 };
+        for lane in 0..lanes {
+            let tile = (part.x + dx + dy.abs() * lane, part.y + dy + dx.abs() * lane);
+            layout.feeds.entry(tile).or_default().push(part.direction);
+        }
+    }
+    for part in layout.parts.iter().filter(|part| part.kind == Kind::Input) {
+        let (dx, dy) = DIRECTIONS[part.direction as usize];
+        if let Some(&exit) = (1..=EXPRESS_TUNNEL_SPAN).find_map(|distance| {
+            exits.get(&(
+                part.x + dx * distance,
+                part.y + dy * distance,
+                part.direction,
+            ))
+        }) {
+            layout.tunnels.push(((part.x, part.y), exit));
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    fn check_geometry(layout: &Layout, inputs: usize, outputs: usize, gaps: (usize, usize)) {
+        let mut occupied = HashSet::new();
+        for part in &layout.parts {
+            let (dx, dy) = DIRECTIONS[part.direction as usize];
+            let mut claim = |x, y| {
+                assert!((0..layout.width).contains(&x) && (0..layout.height).contains(&y));
+                assert!(occupied.insert((x, y)), "overlapping parts at {x},{y}");
+            };
+            claim(part.x, part.y);
+            if part.kind == Kind::Splitter {
+                claim(part.x + dy.abs(), part.y + dx.abs());
+            }
+        }
+        for (x, rows, count, gap) in [
+            (0, &layout.input_rows, inputs, gaps.0),
+            (layout.width - 1, &layout.output_rows, outputs, gaps.1),
+        ] {
+            assert_eq!(rows.len(), count);
+            for pair in rows.windows(2) {
+                assert_eq!(pair[1] - pair[0], gap as i32 + 1);
+            }
+            let mut edge_rows: Vec<_> = layout
+                .parts
+                .iter()
+                .filter(|part| part.x == x)
+                .map(|part| {
+                    assert_eq!(part.kind, Kind::Belt);
+                    assert_eq!(part.direction, EAST);
+                    part.y
+                })
+                .collect();
+            edge_rows.sort_unstable();
+            assert_eq!(&edge_rows, rows);
+        }
+
+        let tunnels: HashSet<_> = layout.tunnels.iter().map(|&(_, output)| output).collect();
+        assert_eq!(tunnels.len(), layout.tunnels.len());
+        assert_eq!(
+            layout.tunnels.len(),
+            layout
+                .parts
+                .iter()
+                .filter(|part| part.kind == Kind::Input)
+                .count()
+        );
+        assert_eq!(
+            layout.tunnels.len(),
+            layout
+                .parts
+                .iter()
+                .filter(|part| part.kind == Kind::Output)
+                .count()
+        );
+    }
+
+    #[test]
+    fn generated_and_compact_layouts_have_exact_port_spacing() {
+        for (inputs, outputs) in [
+            (1, 1),
+            (1, 8),
+            (4, 4),
+            (3, 5),
+            (12, 12),
+            (9, 6),
+            (64, 33),
+            (33, 64),
+        ] {
+            for gaps in [(0, 0), (1, 2), (MAX_GAP, MAX_GAP)] {
+                let layout = get_layout(inputs, outputs, gaps.0, gaps.1).unwrap();
+                check_geometry(&layout, inputs, outputs, gaps);
+            }
+        }
+        let adjacent = get_layout(12, 12, 0, 0).unwrap();
+        assert!(adjacent.height < 80, "oversized 12×12: {}", adjacent.height);
+        assert!(adjacent.width < 70, "overly wide 12×12: {}", adjacent.width);
+        let compact = get_layout(4, 4, 0, 0).unwrap();
+        assert_eq!((compact.width, compact.height), (10, 4));
+    }
+
+    #[test]
+    fn port_routes_do_not_add_sideloads_to_generated_layouts() {
+        for gaps in [(0, 0), (1, 2), (MAX_GAP, 1)] {
+            let layout = get_layout(12, 12, gaps.0, gaps.1).unwrap();
+            assert!(layout.feeds.values().all(|feeds| feeds.len() == 1));
+
+            let occupied: HashMap<_, _> = layout
+                .parts
+                .iter()
+                .flat_map(|part| {
+                    let mut tiles = vec![((part.x, part.y), part)];
+                    if part.kind == Kind::Splitter {
+                        tiles.push(((part.x, part.y + 1), part));
+                    }
+                    tiles
+                })
+                .collect();
+            for &((x, y), (end_x, end_y)) in &layout.tunnels {
+                let direction = occupied[&(x, y)].direction;
+                let (dx, dy) = DIRECTIONS[direction as usize];
+                let length = (x - end_x).abs() + (y - end_y).abs();
+                assert!((2..=4).contains(&length));
+                assert_eq!((x + dx * length, y + dy * length), (end_x, end_y));
+                for distance in 1..length {
+                    if let Some(part) = occupied.get(&(x + dx * distance, y + dy * distance)) {
+                        assert!(part.direction != direction || part.kind == Kind::Belt);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn rejects_counts_and_spacing_outside_their_ranges() {
+        assert!(get_layout(0, 1, 0, 0).is_none());
+        assert!(get_layout(1, MAX_LANES + 1, 0, 0).is_none());
+        assert!(get_layout(1, 1, MAX_GAP + 1, 0).is_none());
+        assert!(get_layout(1, 1, 0, MAX_GAP + 1).is_none());
+    }
+}

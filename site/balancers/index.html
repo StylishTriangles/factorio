@@ -8,90 +8,10 @@
     <title>Belt Balancers · Factorio Science Planner</title>
     <link rel="icon" href="../favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../style.css">
-    <link rel="stylesheet" href="./balancers.css">
-    <script type="module" src="./balancers.js"></script>
   </head>
-  <body class="balancers-page">
-    <header class="site-header">
-      <div class="shell header-inner">
-        <div class="brand">
-          <img src="../favicon.svg" width="36" height="36" alt="">
-          <strong>Factorio</strong>
-          <span>Science Planner</span>
-        </div>
-        <nav aria-label="Main navigation">
-          <a href="../">Science Planner</a>
-          <a href="./" aria-current="page">Balancers</a>
-        </nav>
-      </div>
-    </header>
-    <main class="balancers-main">
-      <div class="balancers-intro">
-        <h1>Belt Balancers</h1>
-        <p>Choose 1–64 belts per side to build an express belt balancer.</p>
-      </div>
-
-      <section class="balancer-panel" aria-label="Belt layout and blueprint">
-        <form class="balancer-toolbar" id="balancer-form">
-          <div class="size-control">
-            <label for="input-count">Inputs
-              <input id="input-count" type="number" min="1" step="1" inputmode="numeric" value="4" required>
-            </label>
-            <span class="size-arrow" aria-hidden="true">→</span>
-            <label for="output-count">Outputs
-              <input id="output-count" type="number" min="1" step="1" inputmode="numeric" value="4" required>
-            </label>
-            <button id="generate-layout" class="balancer-button" type="submit" disabled>Generate</button>
-          </div>
-          <button id="copy-blueprint" class="copy-button" type="button" disabled>
-            <span class="copy-icon" aria-hidden="true"></span>
-            <span id="copy-label">Copy blueprint</span>
-          </button>
-        </form>
-        <div class="balancer-board" tabindex="0" role="region" aria-label="Belt layout preview">
-          <div class="diagram-area">
-            <canvas id="belt-diagram" role="img" aria-label="Belt layout"></canvas>
-          </div>
-          <noscript><p>Enable JavaScript to preview and copy a belt balancer.</p></noscript>
-        </div>
-        <div class="balancer-caption">
-          <ul class="balancer-legend" aria-label="Diagram legend">
-            <li><canvas id="legend-belt" width="68" height="52" aria-hidden="true"></canvas>Belt</li>
-            <li><canvas id="legend-splitter" width="64" height="64" aria-hidden="true"></canvas>Splitter</li>
-            <li><canvas id="legend-underground" width="120" height="52" aria-hidden="true"></canvas>Underground</li>
-          </ul>
-          <div class="balancer-view">
-            <span id="footprint" aria-live="polite"></span>
-            <label class="zoom-control" for="preview-zoom">Zoom
-              <select id="preview-zoom" class="balancer-button">
-                <option value="0">Fit to view</option>
-                <option value="24">24 px / tile</option>
-                <option value="48">48 px / tile</option>
-                <option value="72">72 px / tile</option>
-              </select>
-            </label>
-          </div>
-        </div>
-      </section>
-
-      <div class="balancer-notes">
-        <p>In Factorio, open <strong>Import string</strong> and paste the blueprint.</p>
-        <a href="https://github.com/R-O-C-K-E-T/Factorio-SAT/blob/main/books/blue_narrow.txt">Compact layouts from Factorio-SAT</a>
-      </div>
-      <details class="balancer-graphics">
-        <summary>Game graphics</summary>
-        <p>Choose the <code>data/base/graphics/entity</code> folder from your Factorio 2.x installation. The browser reads the graphics locally.</p>
-        <input id="game-files" type="file" webkitdirectory hidden>
-        <button id="use-game-graphics" class="balancer-button" type="button">Choose folder</button>
-        <button id="restore-graphics" class="balancer-button" type="button" hidden>Reset graphics</button>
-        <p id="graphics-status" role="status"></p>
-      </details>
-      <p id="layout-error" class="layout-error" role="alert" hidden></p>
-      <p id="blueprint-status" class="sr-only" role="status"></p>
-      <div class="manual-copy" id="manual-copy" hidden>
-        <label for="blueprint-string">Copy this blueprint string manually</label>
-        <textarea id="blueprint-string" rows="3" readonly spellcheck="false"></textarea>
-      </div>
-    </main>
+  <body data-balancers>
+    <p class="startup" role="status">Loading Belt Balancers…</p>
+    <noscript><p class="startup">Enable JavaScript to load the WebAssembly generator.</p></noscript>
+    <script type="module" src="../start.js"></script>
   </body>
 </html>

@@ -1,30 +1,25 @@
-// Tile layouts from Factorio-SAT, books/blue_narrow.txt (blob bb6b24caf70662973450417a8796d036677e382d).
-// https://github.com/R-O-C-K-E-T/Factorio-SAT/blob/main/books/blue_narrow.txt
-// Distributed under GPL-3.0. See layouts.LICENSE.txt.
-// ^ > v < are directions. i/o mark tunnel ends. S/s are the first/second tiles of a splitter.
-// Entries here pass the open-output balance and throughput checks in Factorio.
-export const layouts = {
+{
   "1x2": [
     "> S> >",
-    ". s >",
+    ". s >"
   ],
   "1x3": [
     "> > S> > > v . S> >",
     ". > s i> Sv s o> s >",
-    ". ^ < < < > > > >",
+    ". ^ < < < > > > >"
   ],
   "1x4": [
     ". . S> >",
     "> S> s >",
     ". s S> >",
-    ". . s >",
+    ". . s >"
   ],
   "1x5": [
     "> > S> > S> > S> >",
     ". > s v s v s >",
     ". ^ . Sv s > S> >",
     ". ^ S< < Sv s s >",
-    ". . s < < > > >",
+    ". . s < < > > >"
   ],
   "1x6": [
     "> > v . S> >",
@@ -32,7 +27,7 @@ export const layouts = {
     ". > S> s S> >",
     ". > s v s >",
     ". ^ Sv s S> >",
-    ". ^ < > s >",
+    ". ^ < > s >"
   ],
   "1x7": [
     ". . v < > S> >",
@@ -41,7 +36,7 @@ export const layouts = {
     ". > > s S> s >",
     "> ^ v < s S> >",
     ". ov > ^ . s >",
-    ". > > > > > >",
+    ". > > > > > >"
   ],
   "1x8": [
     ". . . S> >",
@@ -51,33 +46,33 @@ export const layouts = {
     ". S> ^ S> >",
     "> s S> s >",
     ". . s S> >",
-    ". . . s >",
+    ". . . s >"
   ],
   "2x1": [
     "> S> >",
-    "> s .",
+    "> s ."
   ],
   "2x2": [
     "> S> >",
-    "> s >",
+    "> s >"
   ],
   "2x3": [
     "> S> i> v < < < < o> S> >",
     "> s v > S> > S> ^ > s >",
-    ". . > > s i> s > ^ o> >",
+    ". . > > s i> s > ^ o> >"
   ],
   "2x4": [
     ". . S> >",
     "> S> s >",
     "> s S> >",
-    ". . s >",
+    ". . s >"
   ],
   "2x5": [
     "> > > > > v v < < > > >",
     "> v . > v Sv s . S^ s S> >",
     ". > S> ^ Sv s > S> ^ > s >",
     ". > s i> v v o> s > ^ S> >",
-    ". ^ < < < > > > > > s >",
+    ". ^ < < < > > > > > s >"
   ],
   "2x6": [
     "> S> > > > v . S> >",
@@ -85,7 +80,7 @@ export const layouts = {
     ". > s v > S> > S> >",
     ". ^ S< < S> s v s >",
     ". v s > s i> v o> >",
-    ". > i> ^ < < < o> >",
+    ". > i> ^ < < < o> >"
   ],
   "2x7": [
     ". v < > > > S> >",
@@ -94,7 +89,7 @@ export const layouts = {
     "> s i> ^ o> S> s >",
     ". . . ^ > s S> >",
     ". ov S> ^ ^ ov s >",
-    ". > s i> ^ < o> >",
+    ". > s i> ^ < o> >"
   ],
   "2x8": [
     ". > > S> >",
@@ -104,25 +99,25 @@ export const layouts = {
     "> S> ^ S> >",
     "> s S> s >",
     ". . s S> >",
-    ". . . s >",
+    ". . . s >"
   ],
   "3x2": [
     "> i> . . > v o> S> > > S> >",
     "> S> i> S^ s > > s v o> s >",
-    "> s > ^ ^ < < < < . . .",
+    "> s > ^ ^ < < < < . . ."
   ],
   "3x4": [
     "> S> i> > v o> S> > S> > > > S> >",
     "> s i> ^ > S> s v s v o> S> s >",
     "> > v ^ > s i> v . v o> s S> >",
-    ". . > ^ ^ < < < . > > > s >",
+    ". . > ^ ^ < < < . > > > s >"
   ],
   "3x5": [
     "> S> > v . . > v v < > > > S> >",
     "> s i> > S> > ^ Sv s S^ s o> S> s >",
     "> > > S> s v Sv s > > ^ > s S> >",
     ". > > s i> Sv s > v . o> ^ > s >",
-    ". ^ < < < < > i> > > > > ^ o> >",
+    ". ^ < < < < > i> > > > > ^ o> >"
   ],
   "3x6": [
     ". . > > > S> > S> >",
@@ -130,7 +125,7 @@ export const layouts = {
     "> S> ^ > s v v S> >",
     "> s S> ^ v < > s >",
     ". > s i> > v o> S> >",
-    ". ^ < < < < . s >",
+    ". ^ < < < < . s >"
   ],
   "3x7": [
     ". v < > > > S> >",
@@ -139,7 +134,7 @@ export const layouts = {
     "> s > > > S> s >",
     "> > > S> > s S> >",
     ". ov S> s v i^ s >",
-    ". > s i> > ^ o> >",
+    ". > s i> > ^ o> >"
   ],
   "3x8": [
     ". > v > > > v . S> >",
@@ -149,31 +144,31 @@ export const layouts = {
     ". > s v s > S> > S> >",
     ". ^ ov v i^ > s v s >",
     ". ^ Sv s S^ s ov > S> >",
-    ". ^ < > ^ ^ < . s >",
+    ". ^ < > ^ ^ < . s >"
   ],
   "4x1": [
     "> S> . .",
     "> s S> >",
     "> S> s .",
-    "> s . .",
+    "> s . ."
   ],
   "4x2": [
     "> S> . .",
     "> s S> >",
     "> S> s >",
-    "> s . .",
+    "> s . ."
   ],
   "4x3": [
     "> S> > > > S> i> > > > v o> S> >",
     "> s S> i> > s S> ^ o> v v > s >",
     "> S> s . ^ > s i> . Sv s ^ o> >",
-    "> s > > ^ ^ < < < < > ^ . .",
+    "> s > > ^ ^ < < < < > ^ . ."
   ],
   "4x4": [
     "> S> > > v > > > S> >",
     "> s S> i> v ^ < o> s >",
     "> S> s i> > S> ^ o> S> >",
-    "> s > > > s > > s >",
+    "> s > > > s > > s >"
   ],
   "4x6": [
     "> S> > > v v < > > S> >",
@@ -181,7 +176,7 @@ export const layouts = {
     "> S> s i> v v . ^ o> S> >",
     "> s v . v > S> ^ S> s >",
     ". . v . > S> s > s S> >",
-    ". . > > > s > > > s >",
+    ". . > > > s > > > s >"
   ],
   "4x7": [
     ". . > v v < > > > > >",
@@ -190,7 +185,7 @@ export const layouts = {
     "> S> s i> > > S> ^ o> S> >",
     "> s v ov . i^ s S> > s >",
     ". v < > S> ^ . s > S> >",
-    ". > > > s > > > > s >",
+    ". > > > s > > > > s >"
   ],
   "4x8": [
     ". v < > S> >",
@@ -200,21 +195,21 @@ export const layouts = {
     "> S> > s S> >",
     "> s v i^ s >",
     ". ov > ^ S> >",
-    ". > > > s >",
+    ". > > > s >"
   ],
   "5x3": [
     "> S> > > v v < > > > S> > > S> >",
     "> s S> i> Sv s S^ s . > s v o> s >",
     "> S> s v . > ^ S^ s ^ . > S> > >",
     "> s v > i> . > ^ S^ s o> > s v .",
-    "> i> > > > > ^ o> ^ ^ < < < < .",
+    "> i> > > > > ^ o> ^ ^ < < < < ."
   ],
   "5x4": [
     "> S> i> . v < < < . o> S> > > > S> >",
     "> s S> . v > i> S^ s > s v o> S> s >",
     "> S> s v v ^ < ^ S^ s v < > s S> >",
     "> s i> v > S> ^ S^ s ^ v o> ^ > s >",
-    "> > i> > > s > ^ o> ^ > > > ^ . .",
+    "> > i> > > s > ^ o> ^ > > > ^ . ."
   ],
   "5x6": [
     "> S> > v > > > > > i> > v o> S> >",
@@ -222,7 +217,7 @@ export const layouts = {
     "> i> > S> ^ v o> S> i> ^ o> > s S> >",
     "> S> > s i> > S> s S> ^ o> > > s >",
     "> s i> ov o> S> s S> s i> i^ o> > S> >",
-    ". . . > > s i> s > > ^ o> > s >",
+    ". . . > > s i> s > > ^ o> > s >"
   ],
   "6x2": [
     "> S> . > > > S> >",
@@ -230,7 +225,7 @@ export const layouts = {
     "> S> . ^ > s v .",
     "> s S> ^ ^ . v .",
     "> S> s v S^ s v .",
-    "> s . > ^ ^ < .",
+    "> s . > ^ ^ < ."
   ],
   "6x3": [
     "> S> . > > > > S> >",
@@ -238,7 +233,7 @@ export const layouts = {
     "> S> > > > s S> > >",
     "> s . i^ > > s v .",
     "> S> . S^ s v < v .",
-    "> s > ^ ^ < ^ < .",
+    "> s > ^ ^ < ^ < ."
   ],
   "6x4": [
     "> S> > > v v < > > S> >",
@@ -246,7 +241,7 @@ export const layouts = {
     "> S> s i> Sv s ^ o> > S> >",
     "> s S> . > S> ^ i^ > s >",
     "> S> s > > s S> ^ ^ . .",
-    "> s > > > > s > ^ . .",
+    "> s > > > > s > ^ . ."
   ],
   "6x5": [
     "> S> i> > > > v o> > > v . > > S> >",
@@ -254,7 +249,7 @@ export const layouts = {
     "> S> s v v . > S> i> ^ < > S> ^ o> >",
     "> s i> v > S> > s > S> ^ o> s > S> >",
     "> S> i> v o> s S> . > s S> i> i^ o> s >",
-    "> s i> > > > s > ^ o> s > ^ . . .",
+    "> s i> > > > s > ^ o> s > ^ . . ."
   ],
   "6x6": [
     "> S> > v v < > > S> i> > v o> S> >",
@@ -262,7 +257,7 @@ export const layouts = {
     "> S> i> v > ^ ^ v < < . o> s S> >",
     "> s i> v o> S> ^ > i> > > v o> s >",
     "> S> i> v o> s i> > > ^ i^ v o> S> >",
-    "> s i> > > > > ^ o> > ^ > > s >",
+    "> s i> > > > > ^ o> > ^ > > s >"
   ],
   "6x7": [
     "> S> > > v > i> . v < > v o> >",
@@ -271,7 +266,7 @@ export const layouts = {
     "> s > > S> i> ^ < > S> ^ o> S> >",
     "> S> i> > s > v o> v s > S> s >",
     "> s i> ^ ov v < . v i^ o> s S> >",
-    ". . . ^ < > > i> > ^ o> > s >",
+    ". . . ^ < > > i> > ^ o> > s >"
   ],
   "6x8": [
     "> S> > > v . > > > > S> > S> >",
@@ -281,7 +276,7 @@ export const layouts = {
     "> S> i> > v o> S> s i> ^ < o> S> >",
     "> s S> i> > S> s v ov o> ^ S> s >",
     ". > s v > s v v > S> > s S> >",
-    ". ^ o< > ^ i< < > > s > > s >",
+    ". ^ o< > ^ i< < > > s > > s >"
   ],
   "7x6": [
     "> S> > v v < < > v > > > S> >",
@@ -290,7 +285,7 @@ export const layouts = {
     "> S> i> > S> > > ^ o> S> > > s >",
     "> s S> > s . > i> > s v o> S> >",
     "> S> s i> ov > ^ . ^ i^ v o> s >",
-    "> s i> . > ^ . o> ^ ^ < . . .",
+    "> s i> . > ^ . o> ^ ^ < . . ."
   ],
   "7x7": [
     "> S> > v > > > > > v . > > S> >",
@@ -299,7 +294,7 @@ export const layouts = {
     "> s v > S> i> > s S> ^ v < o> S> >",
     "> i> > > s v ^ o> s i> v o> S> s >",
     "> S> i> . i^ v ^ < v < < o> s S> >",
-    "> s > > ^ > i> ^ < o> > > > s >",
+    "> s > > ^ > i> ^ < o> > > > s >"
   ],
   "8x1": [
     "> S> . . . .",
@@ -309,7 +304,7 @@ export const layouts = {
     "> S> s > S> >",
     "> s . > s .",
     "> S> S^ s ov .",
-    "> s ^ ^ < .",
+    "> s ^ ^ < ."
   ],
   "8x2": [
     "> S> . . . .",
@@ -319,7 +314,7 @@ export const layouts = {
     "> S> S^ s . .",
     "> s ^ ^ . .",
     "> S> . ^ < .",
-    "> s > > ^ .",
+    "> s > > ^ ."
   ],
   "8x3": [
     "> S> . > > S> v v < .",
@@ -329,7 +324,7 @@ export const layouts = {
     "> S> . > s > S> > > >",
     "> s S> ^ i^ > s v . .",
     "> S> s v ^ ^ ov v i^ .",
-    "> s . > ^ ^ < > ^ .",
+    "> s . > ^ ^ < > ^ ."
   ],
   "8x4": [
     "> S> > > > v .",
@@ -339,7 +334,7 @@ export const layouts = {
     "> S> > > s S> >",
     "> s . i^ > s >",
     "> S> . S^ s ov .",
-    "> s > ^ ^ < .",
+    "> s > ^ ^ < ."
   ],
   "8x6": [
     "> S> > S> > > > v > > > > S> >",
@@ -349,7 +344,7 @@ export const layouts = {
     "> S> s i> v o> S> > i> > ^ o> S> >",
     "> s S> . > > s S> i> ^ o> S> s >",
     "> S> s S> i> i^ > s v ^ o> s v .",
-    "> s > s > ^ ^ o< > ^ i< < < .",
+    "> s > s > ^ ^ o< > ^ i< < < ."
   ],
   "8x8": [
     "> S> > v > v > > > > S> >",
@@ -359,6 +354,6 @@ export const layouts = {
     "> S> > v i^ > i> > ^ o> S> >",
     "> s i> v ^ < > ^ o> S> s >",
     "> S> i> > S> ^ ^ ov o> s S> >",
-    "> s > > s > ^ > > > s >",
-  ],
-};
+    "> s > > s > ^ > > > s >"
+  ]
+}

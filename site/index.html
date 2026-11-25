@@ -12,15 +12,6 @@
   <body>
     <p class="startup" role="status">Loading Science Planner…</p>
     <noscript><p class="startup">Enable JavaScript to load the WebAssembly calculator.</p></noscript>
-    <script type="module">
-      try {
-        const { default: init } = await import("./pkg/planner.js");
-        await init();
-        document.querySelector(".startup")?.remove();
-      } catch (error) {
-        document.querySelector(".startup").textContent = "Science Planner could not load. Refresh the page to try again.";
-        console.error(error);
-      }
-    </script>
+    <script type="module" src="./start.js"></script>
   </body>
 </html>

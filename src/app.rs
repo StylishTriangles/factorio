@@ -8,6 +8,34 @@ use yew::prelude::*;
 const BASE_SPACE: &str = "base-space-science-pack";
 const SPACE: &str = "space-science-pack";
 
+#[derive(Properties, PartialEq)]
+pub(crate) struct SiteHeaderProps {
+    #[prop_or_default]
+    pub balancers: bool,
+}
+
+#[function_component]
+pub(crate) fn SiteHeader(props: &SiteHeaderProps) -> Html {
+    let root = if props.balancers { "../" } else { "./" };
+    html! {
+        <header class="site-header">
+            <div class="shell header-inner">
+                <div class="brand">
+                    <img src={format!("{root}favicon.svg")} width="36" height="36" alt=""/>
+                    <strong>{"Factorio"}</strong>
+                    <span>{"Science Planner"}</span>
+                </div>
+                <nav aria-label="Main navigation" class="site-nav">
+                    <a href={root} aria-current={(!props.balancers).then_some("page")}>{"Science Planner"}</a>
+                    <a href={format!("{root}balancers/")} aria-current={props.balancers.then_some("page")}>{"Balancers"}</a>
+                    <a href="https://wiki.factorio.com/">{"Factorio Wiki"}</a>
+                    <a href="https://github.com/StylishTriangles/factorio">{"GitHub"}</a>
+                </nav>
+            </div>
+        </header>
+    }
+}
+
 #[derive(Clone, Copy, PartialEq)]
 enum RateUnit {
     Minute,
@@ -269,20 +297,7 @@ fn Planner(props: &PlannerProps) -> Html {
 
     html! {
         <>
-            <header class="site-header">
-                <div class="shell header-inner">
-                    <div class="brand">
-                        <img src="./favicon.svg" width="36" height="36" alt=""/>
-                        <strong>{"Factorio"}</strong>
-                        <span>{"Science Planner"}</span>
-                    </div>
-                    <nav aria-label="Main navigation" class="planner-nav">
-                        <a href="./balancers/">{"Balancers"}</a>
-                        <a href="https://wiki.factorio.com/">{"Factorio Wiki"}</a>
-                        <a href="https://github.com/StylishTriangles/factorio">{"GitHub"}</a>
-                    </nav>
-                </div>
-            </header>
+            <SiteHeader/>
             <main class="shell">
                 <div class="intro">
                     <h1>{"Science Planner"}</h1>
@@ -387,7 +402,7 @@ fn parse_rate(input: &str, unit: RateUnit) -> Option<f64> {
     (value.is_finite() && value >= 0.0 && (value * 60.0).is_finite()).then_some(value.abs())
 }
 
-fn chevron() -> Html {
+pub(crate) fn chevron() -> Html {
     html! {
         <svg class="chevron" aria-hidden="true" viewBox="0 0 16 16" width="16" height="16">
             <path d="m4.5 6 3.5 3.5L11.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>

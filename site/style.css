@@ -67,6 +67,7 @@ a { color: inherit; text-underline-offset: 4px; }
 .brand > span { color: var(--muted); font-size: 18px; }
 .site-header nav { gap: 18px; font-size: 14px; font-weight: 550; }
 .site-header a { text-decoration: none; white-space: nowrap; }
+.site-header a[aria-current="page"] { color: var(--accent); }
 .site-header a + a { padding-left: 18px; border-left: 1px solid var(--line); }
 
 .intro { margin-block: 10px 14px; }
@@ -287,6 +288,34 @@ input[aria-invalid="true"] { outline: 2px solid #fe896e; outline-offset: -2px; }
 
 .graph-viewport[data-panning], .graph-viewport[data-panning] .node-card { cursor: grabbing; }
 
+.belt-number input { padding-right: 43px; }
+.belt-zoom select { padding-left: 10px; }
+.belt-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.belt-actions button { min-height: 42px; }
+.belt-actions .belt-generate { border-color: #9b7443; background: #322719; color: var(--accent); }
+.belt-viewport { background-image: none; }
+.belt-diagram { min-width: 100%; min-height: 100%; }
+.belt-diagram canvas { position: sticky; top: 0; left: 0; display: block; }
+.belt-footprint { font-variant-numeric: tabular-nums; }
+.belt-legend { display: flex; flex-wrap: wrap; gap: 4px 18px; padding: 7px 0; list-style: none; }
+.belt-legend li { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13px; }
+.belt-legend canvas { width: auto; height: 23px; }
+.belt-graphics, .belt-manual { margin-top: 12px; color: var(--muted); font-size: 13px; }
+.belt-graphics summary { width: fit-content; color: var(--text); cursor: pointer; }
+.belt-graphics p { margin-block: 7px; }
+.belt-graphics p:empty { display: none; }
+.belt-manual { display: grid; gap: 5px; }
+.belt-manual textarea {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--field);
+  color: var(--text);
+  font: 13px ui-monospace, monospace;
+  resize: vertical;
+}
+
 .graph, .node-children { padding: 0; list-style: none; }
 
 .graph {
@@ -435,9 +464,9 @@ td { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 
 @media (max-width: 600px) {
   .shell { width: calc(100% - 26px); }
-  .site-header nav { gap: 9px; font-size: 12px; }
-  .site-header .planner-nav { flex-wrap: wrap; justify-content: flex-end; row-gap: 2px; }
-  .site-header a + a { padding-left: 9px; }
+  .header-inner { flex-wrap: wrap; gap: 5px 14px; padding-block: 6px; }
+  .site-header .site-nav { flex-wrap: wrap; gap: 2px 7px; font-size: 12px; }
+  .site-header a + a { padding-left: 0; border-left: 0; }
   .brand { gap: 7px; }
   .brand img { width: 29px; height: 29px; }
   .brand strong { font-size: 21px; }
@@ -451,6 +480,7 @@ td { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   .module-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .module-fields .select-control { height: 42px; }
   .select-control select { font-size: 14px; padding-left: 38px; padding-right: 26px; }
+  .belt-zoom select { padding-left: 10px; }
   .select-control .chevron { right: 7px; }
   .settings-details { padding-inline: 0; font-size: 12px; }
   .settings-details > span { padding-inline: 9px; }
@@ -458,6 +488,7 @@ td { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   .settings-details > span:nth-child(2) { padding-left: 0; border-left: 0; }
   .section-heading p { font-size: 13px; }
   .graph-section .section-heading { align-items: flex-start; flex-wrap: wrap; }
+  .belt-footprint { font-size: 13px; }
   .reset-button { padding-inline: 7px; font-size: 12px; }
   .graph { --scene-gutter: 10px; --group-width: 156px; }
   .graph-viewport { height: clamp(320px, 54svh, 520px); }
