@@ -2,9 +2,11 @@ use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
 mod dense;
+mod station;
 
 pub const MAX_LANES: usize = 64;
 pub const MAX_GAP: usize = 13;
+pub const STATION_LANES: usize = 6;
 
 const NORTH: u8 = 0;
 const EAST: u8 = 1;
@@ -51,32 +53,53 @@ pub struct Layout {
     pub tunnels: Vec<(Tile, Tile)>,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PortMode {
+    Spacing(usize),
+    Station,
+}
+
+impl PortMode {
+    fn valid_for(self, lanes: usize) -> bool {
+        match self {
+            Self::Spacing(gap) => gap <= MAX_GAP,
+            Self::Station => lanes.is_multiple_of(STATION_LANES),
+        }
+    }
+}
+
 pub fn get_layout(
     inputs: usize,
     outputs: usize,
     input_gap: usize,
     output_gap: usize,
 ) -> Option<Layout> {
-    get_layout_variant(inputs, outputs, input_gap, output_gap, false)
+    get_layout_with_ports(
+        inputs,
+        outputs,
+        PortMode::Spacing(input_gap),
+        PortMode::Spacing(output_gap),
+        false,
+    )
 }
 
-pub(crate) fn get_layout_variant(
+pub fn get_layout_with_ports(
     inputs: usize,
     outputs: usize,
-    input_gap: usize,
-    output_gap: usize,
+    input_mode: PortMode,
+    output_mode: PortMode,
     use_compact: bool,
 ) -> Option<Layout> {
     if !(1..=MAX_LANES).contains(&inputs)
         || !(1..=MAX_LANES).contains(&outputs)
-        || input_gap > MAX_GAP
-        || output_gap > MAX_GAP
+        || !input_mode.valid_for(inputs)
+        || !output_mode.valid_for(outputs)
     {
         return None;
     }
 
     let with_ports = |mut layout: Layout| {
-        route_ports(&mut layout, input_gap, output_gap);
+        route_ports(&mut layout, input_mode, output_mode);
         layout
     };
     let mut layout = if let Some(pattern) = PATTERNS.get(&format!("{inputs}x{outputs}")) {
@@ -84,13 +107,19 @@ pub(crate) fn get_layout_variant(
     } else {
         let standard = with_ports(generate_layout(inputs, outputs));
         let score = |layout: &Layout| (layout.width * layout.height, layout.parts.len());
+        let output_gap = match output_mode {
+            PortMode::Spacing(gap) => gap,
+            PortMode::Station => 0,
+        };
         dense::generate(inputs, outputs, output_gap, use_compact)
             .map(with_ports)
             .filter(|candidate| score(candidate) < score(&standard))
             .unwrap_or(standard)
     };
     index_tracks(&mut layout);
-    tunnel_straight_runs(&mut layout);
+    let first_column = i32::from(input_mode != PortMode::Station);
+    let last_column = layout.width - i32::from(output_mode != PortMode::Station);
+    tunnel_straight_runs(&mut layout, first_column..last_column);
     Some(layout)
 }
 
@@ -462,18 +491,38 @@ fn generate_layout(inputs: usize, outputs: usize) -> Layout {
 
 struct PortRoutes {
     rows: Vec<i32>,
-    bends: Vec<i32>,
+    path: PortPath,
     width: i32,
 }
 
+enum PortPath {
+    Bends(Vec<i32>),
+    PackedStation(&'static str),
+}
+
 impl PortRoutes {
-    fn new(track_rows: &[i32], gap: usize) -> Self {
-        let pitch = gap as i32 + 1;
-        let span = (track_rows.len() as i32 - 1) * pitch;
-        let top = (track_rows[0] + track_rows[track_rows.len() - 1] - span).div_euclid(2);
-        let rows: Vec<_> = (0..track_rows.len())
-            .map(|lane| top + lane as i32 * pitch)
-            .collect();
+    fn new(track_rows: &[i32], mode: PortMode) -> Self {
+        let rows: Vec<_> = match mode {
+            PortMode::Spacing(gap) => {
+                let pitch = gap as i32 + 1;
+                let span = (track_rows.len() as i32 - 1) * pitch;
+                let top = (track_rows[0] + track_rows[track_rows.len() - 1] - span).div_euclid(2);
+                (0..track_rows.len())
+                    .map(|lane| top + lane as i32 * pitch)
+                    .collect()
+            }
+            PortMode::Station => {
+                let rows = station::rows(track_rows.len(), track_rows[0]);
+                if let Some(pattern) = station::packed_pattern(track_rows) {
+                    return Self {
+                        rows,
+                        width: pattern.lines().next().unwrap().len() as i32,
+                        path: PortPath::PackedStation(pattern),
+                    };
+                }
+                rows
+            }
+        };
 
         // Overlapping bends turn from the outside in; disjoint ones can share a column.
         let mut bends = vec![0; rows.len()];
@@ -505,13 +554,24 @@ impl PortRoutes {
         }
         let bend = bends.iter().copied().max().unwrap_or_default();
         let width = if bend == 0 { 0 } else { bend + 1 };
-        Self { rows, bends, width }
+        Self {
+            rows,
+            path: PortPath::Bends(bends),
+            width,
+        }
     }
 
     fn append(&self, parts: &mut Vec<Part>, track_rows: &[i32], left: bool, boundary: i32) {
+        let bends = match self.path {
+            PortPath::Bends(ref bends) => bends,
+            PortPath::PackedStation(pattern) => {
+                station::append(parts, pattern, self.width, track_rows[0], left, boundary);
+                return;
+            }
+        };
         for (lane, &track_row) in track_rows.iter().enumerate() {
             let port_row = self.rows[lane];
-            let bend = self.bends[lane];
+            let bend = bends[lane];
             for column in 0..self.width {
                 let x = if left {
                     column
@@ -537,9 +597,9 @@ impl PortRoutes {
     }
 }
 
-fn route_ports(layout: &mut Layout, input_gap: usize, output_gap: usize) {
-    let inputs = PortRoutes::new(&layout.input_rows, input_gap);
-    let outputs = PortRoutes::new(&layout.output_rows, output_gap);
+fn route_ports(layout: &mut Layout, input_mode: PortMode, output_mode: PortMode) {
+    let inputs = PortRoutes::new(&layout.input_rows, input_mode);
+    let outputs = PortRoutes::new(&layout.output_rows, output_mode);
 
     for part in &mut layout.parts {
         part.x += inputs.width;
@@ -568,7 +628,7 @@ fn route_ports(layout: &mut Layout, input_gap: usize, output_gap: usize) {
     layout.output_rows = outputs.rows.into_iter().map(|row| row - top).collect();
 }
 
-fn tunnel_straight_runs(layout: &mut Layout) {
+fn tunnel_straight_runs(layout: &mut Layout, columns: std::ops::Range<i32>) {
     // Existing underground belts can block new pairs on the same axis.
     let mut underground = HashSet::new();
     for &((x, y), (end_x, end_y)) in &layout.tunnels {
@@ -586,9 +646,17 @@ fn tunnel_straight_runs(layout: &mut Layout) {
         .enumerate()
         .filter_map(|(index, part)| {
             let tile = (part.x, part.y);
+            let straight_feed = match layout.feeds.get(&tile) {
+                Some(feeds) => feeds.as_slice() == [part.direction],
+                None => {
+                    part.x == 0
+                        && part.direction == EAST
+                        && layout.input_rows.binary_search(&part.y).is_ok()
+                }
+            };
             (part.kind == Kind::Belt
-                && (1..layout.width - 1).contains(&part.x)
-                && layout.feeds.get(&tile).map(Vec::as_slice) == Some(&[part.direction])
+                && columns.contains(&part.x)
+                && straight_feed
                 && !underground.contains(&(part.x, part.y, part.direction % 2)))
             .then_some((tile, (index, part.direction)))
         })
@@ -666,8 +734,18 @@ fn index_tracks(layout: &mut Layout) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use PortMode::{Spacing, Station};
 
     fn check_geometry(layout: &Layout, inputs: usize, outputs: usize, gaps: (usize, usize)) {
+        check_port_geometry(layout, inputs, outputs, (Spacing(gaps.0), Spacing(gaps.1)));
+    }
+
+    fn check_port_geometry(
+        layout: &Layout,
+        inputs: usize,
+        outputs: usize,
+        modes: (PortMode, PortMode),
+    ) {
         let mut occupied = HashSet::new();
         for part in &layout.parts {
             let (dx, dy) = DIRECTIONS[part.direction as usize];
@@ -680,13 +758,19 @@ mod tests {
                 claim(part.x + dy.abs(), part.y + dx.abs());
             }
         }
-        for (x, rows, count, gap) in [
-            (0, &layout.input_rows, inputs, gaps.0),
-            (layout.width - 1, &layout.output_rows, outputs, gaps.1),
+        for (x, rows, count, mode) in [
+            (0, &layout.input_rows, inputs, modes.0),
+            (layout.width - 1, &layout.output_rows, outputs, modes.1),
         ] {
             assert_eq!(rows.len(), count);
-            for pair in rows.windows(2) {
-                assert_eq!(pair[1] - pair[0], gap as i32 + 1);
+            match mode {
+                Spacing(gap) => {
+                    assert!(
+                        rows.windows(2)
+                            .all(|pair| pair[1] - pair[0] == gap as i32 + 1)
+                    );
+                }
+                Station => assert_eq!(*rows, station::rows(count, rows[0])),
             }
             let mut edge_rows: Vec<_> = layout
                 .parts
@@ -700,6 +784,8 @@ mod tests {
                             .into_iter()
                             .filter(|y| rows.binary_search(y).is_ok())
                             .collect(),
+                        Kind::Input if mode == Station && x == 0 => vec![part.y],
+                        Kind::Output if mode == Station && x == layout.width - 1 => vec![part.y],
                         _ => panic!("invalid port at {x},{}", part.y),
                     };
                     assert!(!ports.is_empty(), "missing port at {x},{}", part.y);
@@ -816,7 +902,8 @@ mod tests {
             },
         ]);
         index_tracks(&mut layout);
-        tunnel_straight_runs(&mut layout);
+        let last_column = layout.width - 1;
+        tunnel_straight_runs(&mut layout, 1..last_column);
 
         assert_eq!(
             layout.tunnels.iter().copied().collect::<HashSet<_>>(),
@@ -861,7 +948,7 @@ mod tests {
             let layout = get_layout(16, 16, gaps.0, gaps.1).unwrap();
             check_geometry(&layout, 16, 16, gaps);
             let mut standard = generate_layout(16, 16);
-            route_ports(&mut standard, gaps.0, gaps.1);
+            route_ports(&mut standard, Spacing(gaps.0), Spacing(gaps.1));
             assert!(layout.width * layout.height <= standard.width * standard.height);
         }
     }
@@ -903,7 +990,7 @@ mod tests {
         for (outputs, width, height, parts) in
             [(16, 30, 32, 661), (24, 31, 24, 626), (32, 25, 32, 575)]
         {
-            let layout = get_layout_variant(24, outputs, 0, 0, true).unwrap();
+            let layout = get_layout_with_ports(24, outputs, Spacing(0), Spacing(0), true).unwrap();
             assert_eq!((layout.width, layout.height), (width, height));
             assert!(layout.parts.len() <= parts);
             assert!(
@@ -917,8 +1004,14 @@ mod tests {
 
             for input_gap in 0..=MAX_GAP {
                 for output_gap in 0..=MAX_GAP {
-                    let layout =
-                        get_layout_variant(24, outputs, input_gap, output_gap, true).unwrap();
+                    let layout = get_layout_with_ports(
+                        24,
+                        outputs,
+                        Spacing(input_gap),
+                        Spacing(output_gap),
+                        true,
+                    )
+                    .unwrap();
                     check_geometry(&layout, 24, outputs, (input_gap, output_gap));
                     let standard = get_layout(24, outputs, input_gap, output_gap).unwrap();
                     assert!(layout.width * layout.height <= standard.width * standard.height);
@@ -930,7 +1023,8 @@ mod tests {
     #[test]
     fn compact_reduction_routes_spaced_outputs_from_alternating_splitter_ports() {
         for output_gap in 1..=MAX_GAP {
-            let layout = get_layout_variant(24, 16, 0, output_gap, true).unwrap();
+            let layout =
+                get_layout_with_ports(24, 16, Spacing(0), Spacing(output_gap), true).unwrap();
             let width = match output_gap {
                 1 => 25,
                 2 | 3 => 34,
@@ -948,6 +1042,84 @@ mod tests {
             }
             check_geometry(&layout, 24, 16, (0, output_gap));
             check_tracks(&layout);
+        }
+    }
+
+    #[test]
+    fn station_adapters_group_ports_and_connect_to_the_balancer() {
+        for (inputs, outputs, input_mode, output_mode, compact) in [
+            (6, 6, Station, Station, false),
+            (12, 18, Station, Station, false),
+            (24, 16, Station, Spacing(3), true),
+            (24, 24, Station, Station, true),
+            (24, 24, Station, Station, false),
+            (24, 32, Station, Spacing(0), true),
+            (5, 24, Spacing(4), Station, false),
+            (60, 60, Station, Station, false),
+        ] {
+            let layout =
+                get_layout_with_ports(inputs, outputs, input_mode, output_mode, compact).unwrap();
+            check_port_geometry(&layout, inputs, outputs, (input_mode, output_mode));
+            check_tracks(&layout);
+        }
+        let four_cars = get_layout_with_ports(24, 24, Station, Station, true).unwrap();
+        assert_eq!((four_cars.width, four_cars.height), (39, 27));
+        assert!(get_layout_with_ports(7, 6, Station, Station, false).is_none());
+        assert!(get_layout_with_ports(6, 7, Station, Station, false).is_none());
+    }
+
+    #[test]
+    fn packed_station_adapters_have_one_independent_path_per_belt() {
+        for (wagons, width) in (2..=10).zip([3, 4, 4, 5, 5, 5, 6, 7, 7]) {
+            let tracks: Vec<_> = (2..2 + wagons * STATION_LANES as i32).collect();
+            let route = PortRoutes::new(&tracks, Station);
+            assert_eq!(route.width, width);
+            for left in [true, false] {
+                let mut layout = Layout::default();
+                route.append(&mut layout.parts, &tracks, left, 0);
+                index_tracks(&mut layout);
+                let tunnels: HashMap<_, _> = layout.tunnels.iter().copied().collect();
+                let mut belts: HashMap<_, _> = layout
+                    .parts
+                    .iter()
+                    .map(|part| ((part.x, part.y), part))
+                    .collect();
+                assert_eq!(belts.len(), layout.parts.len());
+                let (sources, sinks) = if left {
+                    (&route.rows, &tracks)
+                } else {
+                    (&tracks, &route.rows)
+                };
+                let mut actual_sinks = Vec::new();
+                for &source in sources {
+                    let mut tile = (0, source);
+                    let mut incoming = EAST;
+                    let mut straight_run = 0;
+                    while tile.0 < width {
+                        let part = belts
+                            .remove(&tile)
+                            .expect("each path uses its own connected belts");
+                        straight_run = if part.kind == Kind::Belt && part.direction == incoming {
+                            straight_run + 1
+                        } else {
+                            0
+                        };
+                        assert!(straight_run <= 3);
+                        incoming = part.direction;
+                        tile = if part.kind == Kind::Input {
+                            tunnels[&tile]
+                        } else {
+                            let (dx, dy) = DIRECTIONS[part.direction as usize];
+                            (tile.0 + dx, tile.1 + dy)
+                        };
+                    }
+                    actual_sinks.push(tile.1);
+                }
+                assert_eq!(actual_sinks[0], sinks[0]);
+                actual_sinks.sort_unstable();
+                assert_eq!(&actual_sinks, sinks);
+                assert!(belts.is_empty());
+            }
         }
     }
 
