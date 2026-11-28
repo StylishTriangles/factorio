@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
 mod dense;
 
 pub const MAX_LANES: usize = 64;
-pub const MAX_GAP: usize = 4;
+pub const MAX_GAP: usize = 13;
 
 const NORTH: u8 = 0;
 const EAST: u8 = 1;
@@ -90,6 +90,7 @@ pub(crate) fn get_layout_variant(
             .unwrap_or(standard)
     };
     index_tracks(&mut layout);
+    tunnel_straight_runs(&mut layout);
     Some(layout)
 }
 
@@ -567,7 +568,71 @@ fn route_ports(layout: &mut Layout, input_gap: usize, output_gap: usize) {
     layout.output_rows = outputs.rows.into_iter().map(|row| row - top).collect();
 }
 
+fn tunnel_straight_runs(layout: &mut Layout) {
+    // Existing underground belts can block new pairs on the same axis.
+    let mut underground = HashSet::new();
+    for &((x, y), (end_x, end_y)) in &layout.tunnels {
+        let axis = u8::from(y == end_y);
+        for tile_x in x.min(end_x)..=x.max(end_x) {
+            for tile_y in y.min(end_y)..=y.max(end_y) {
+                underground.insert((tile_x, tile_y, axis));
+            }
+        }
+    }
+
+    let straight: HashMap<_, _> = layout
+        .parts
+        .iter()
+        .enumerate()
+        .filter_map(|(index, part)| {
+            let tile = (part.x, part.y);
+            (part.kind == Kind::Belt
+                && (1..layout.width - 1).contains(&part.x)
+                && layout.feeds.get(&tile).map(Vec::as_slice) == Some(&[part.direction])
+                && !underground.contains(&(part.x, part.y, part.direction % 2)))
+            .then_some((tile, (index, part.direction)))
+        })
+        .collect();
+
+    let mut run = Vec::new();
+    let mut keep = vec![true; layout.parts.len()];
+    for (&(x, y), &(_, direction)) in &straight {
+        let (dx, dy) = DIRECTIONS[direction as usize];
+        if straight
+            .get(&(x - dx, y - dy))
+            .is_some_and(|&(_, previous)| previous == direction)
+        {
+            continue;
+        }
+        run.clear();
+        let (mut x, mut y) = (x, y);
+        while let Some(&(index, heading)) = straight.get(&(x, y))
+            && heading == direction
+        {
+            run.push(index);
+            x += dx;
+            y += dy;
+        }
+        for section in run.chunks(EXPRESS_TUNNEL_SPAN as usize + 1) {
+            if let [entry, middle @ .., exit] = section
+                && middle.len() >= 2
+            {
+                layout.parts[*entry].kind = Kind::Input;
+                layout.parts[*exit].kind = Kind::Output;
+                for &index in middle {
+                    keep[index] = false;
+                }
+            }
+        }
+    }
+    let mut keep = keep.into_iter();
+    layout.parts.retain(|_| keep.next().unwrap());
+    index_tracks(layout);
+}
+
 fn index_tracks(layout: &mut Layout) {
+    layout.feeds.clear();
+    layout.tunnels.clear();
     let mut exits = HashMap::new();
     for part in &layout.parts {
         let (dx, dy) = DIRECTIONS[part.direction as usize];
@@ -601,7 +666,6 @@ fn index_tracks(layout: &mut Layout) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashSet;
 
     fn check_geometry(layout: &Layout, inputs: usize, outputs: usize, gaps: (usize, usize)) {
         let mut occupied = HashSet::new();
@@ -709,7 +773,7 @@ mod tests {
                 let direction = occupied[&(x, y)].direction;
                 let (dx, dy) = DIRECTIONS[direction as usize];
                 let length = (x - end_x).abs() + (y - end_y).abs();
-                assert!((2..=4).contains(&length));
+                assert!((2..=EXPRESS_TUNNEL_SPAN).contains(&length));
                 assert_eq!((x + dx * length, y + dy * length), (end_x, end_y));
                 for distance in 1..length {
                     if let Some(part) = occupied.get(&(x + dx * distance, y + dy * distance)) {
@@ -718,6 +782,54 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn straight_runs_use_tunnels_without_disturbing_side_feeds_or_existing_pairs() {
+        let mut layout = Layout {
+            width: 22,
+            height: 7,
+            ..Layout::default()
+        };
+        east_belts(&mut layout.parts, 0, 4, 0);
+        east_belts(&mut layout.parts, 0, 5, 1);
+        east_belts(&mut layout.parts, 0, 22, 2);
+        east_belts(&mut layout.parts, 0, 7, 3);
+        push_belt(&mut layout.parts, 3, 4, NORTH);
+        east_belts(&mut layout.parts, 1, 9, 6);
+        layout.parts.extend([
+            Part {
+                x: 9,
+                y: 6,
+                kind: Kind::Input,
+                direction: WEST,
+            },
+            Part {
+                x: 0,
+                y: 6,
+                kind: Kind::Output,
+                direction: WEST,
+            },
+        ]);
+        index_tracks(&mut layout);
+        tunnel_straight_runs(&mut layout);
+
+        assert_eq!(
+            layout.tunnels.iter().copied().collect::<HashSet<_>>(),
+            HashSet::from([
+                ((1, 1), (4, 1)),
+                ((1, 2), (10, 2)),
+                ((11, 2), (20, 2)),
+                ((9, 6), (0, 6)),
+            ])
+        );
+        assert_eq!(layout.feeds[&(3, 3)].len(), 2);
+        assert!(
+            layout
+                .parts
+                .iter()
+                .any(|part| { (part.x, part.y, part.kind) == (21, 2, Kind::Belt) })
+        );
     }
 
     #[test]
@@ -789,7 +901,7 @@ mod tests {
         {
             let layout = get_layout_variant(24, outputs, 0, 0, true).unwrap();
             assert_eq!((layout.width, layout.height), (width, height));
-            assert_eq!(layout.parts.len(), parts);
+            assert!(layout.parts.len() <= parts);
             assert!(
                 layout
                     .parts
