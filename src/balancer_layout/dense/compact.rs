@@ -1,4 +1,4 @@
-use crate::balancer_layout::{Layout, compact_layout};
+use crate::balancer_layout::{EAST, Layout, compact_layout, push_belt};
 use std::sync::LazyLock;
 
 // Merge each pair of outlets from the 24→32 core onto one belt.
@@ -18,12 +18,24 @@ fn read_pattern(text: &str) -> Vec<String> {
     text.lines().map(str::to_owned).collect()
 }
 
-pub(super) fn generate(outputs: usize) -> Option<Layout> {
-    let pattern = match outputs {
-        16 => &*REDUCTION,
-        24 => &*SQUARE,
-        32 => &*EXPANSION,
+pub(super) fn generate(outputs: usize, output_gap: usize) -> Option<Layout> {
+    let pattern = match (outputs, output_gap) {
+        (16, 0) => &*REDUCTION,
+        (16 | 32, _) => &*EXPANSION,
+        (24, _) => &*SQUARE,
         _ => return None,
     };
-    Some(compact_layout(pattern))
+    let mut layout = compact_layout(pattern);
+    if outputs == 16 && output_gap > 0 {
+        // Each final splitter supplies one output at a native pitch of two.
+        layout.output_rows = layout.output_rows.into_iter().step_by(2).collect();
+        if output_gap > 1 {
+            // Keep the unused splitter outlets clear of the fan-out turns.
+            for &y in &layout.output_rows {
+                push_belt(&mut layout.parts, layout.width, y, EAST);
+            }
+            layout.width += 1;
+        }
+    }
+    Some(layout)
 }

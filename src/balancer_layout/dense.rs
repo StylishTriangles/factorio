@@ -7,10 +7,15 @@ mod compact;
 mod rectangular;
 mod square_24;
 
-pub(super) fn generate(inputs: usize, outputs: usize, use_compact: bool) -> Option<Layout> {
+pub(super) fn generate(
+    inputs: usize,
+    outputs: usize,
+    output_gap: usize,
+    use_compact: bool,
+) -> Option<Layout> {
     if inputs == 24
         && use_compact
-        && let Some(layout) = compact::generate(outputs)
+        && let Some(layout) = compact::generate(outputs, output_gap)
     {
         return Some(layout);
     }

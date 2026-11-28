@@ -84,7 +84,7 @@ pub(crate) fn get_layout_variant(
     } else {
         let standard = with_ports(generate_layout(inputs, outputs));
         let score = |layout: &Layout| (layout.width * layout.height, layout.parts.len());
-        dense::generate(inputs, outputs, use_compact)
+        dense::generate(inputs, outputs, output_gap, use_compact)
             .map(with_ports)
             .filter(|candidate| score(candidate) < score(&standard))
             .unwrap_or(standard)
@@ -694,12 +694,16 @@ mod tests {
                 .filter(|part| part.x == x)
                 .flat_map(|part| {
                     assert_eq!(part.direction, EAST);
-                    let lanes = match part.kind {
-                        Kind::Belt => 1,
-                        Kind::Splitter if gap == 0 => 2,
+                    let ports: Vec<_> = match part.kind {
+                        Kind::Belt => vec![part.y],
+                        Kind::Splitter => [part.y, part.y + 1]
+                            .into_iter()
+                            .filter(|y| rows.binary_search(y).is_ok())
+                            .collect(),
                         _ => panic!("invalid port at {x},{}", part.y),
                     };
-                    part.y..part.y + lanes
+                    assert!(!ports.is_empty(), "missing port at {x},{}", part.y);
+                    ports
                 })
                 .collect();
             edge_rows.sort_unstable();
@@ -920,6 +924,30 @@ mod tests {
                     assert!(layout.width * layout.height <= standard.width * standard.height);
                 }
             }
+        }
+    }
+
+    #[test]
+    fn compact_reduction_routes_spaced_outputs_from_alternating_splitter_ports() {
+        for output_gap in 1..=MAX_GAP {
+            let layout = get_layout_variant(24, 16, 0, output_gap, true).unwrap();
+            let width = match output_gap {
+                1 => 25,
+                2 | 3 => 34,
+                _ => 35,
+            };
+            assert_eq!(layout.width, width);
+            if output_gap == 1 {
+                assert_eq!(layout.height, 32);
+                assert!(layout.output_rows.iter().copied().eq((0..32).step_by(2)));
+            } else {
+                let outlets: Vec<_> = layout.parts.iter().filter(|part| part.x == 25).collect();
+                assert_eq!(outlets.len(), 16);
+                assert!(outlets.iter().all(|part| part.direction == EAST));
+                assert!(outlets.windows(2).all(|pair| pair[1].y - pair[0].y == 2));
+            }
+            check_geometry(&layout, 24, 16, (0, output_gap));
+            check_tracks(&layout);
         }
     }
 
