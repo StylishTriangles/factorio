@@ -1,7 +1,7 @@
 use crate::balancer_layout::{EAST, Layout, compact_layout, push_belt};
 use std::sync::LazyLock;
 
-// Merge each pair of outlets from the 24→32 core onto one belt.
+// Route one outlet from each final splitter of the 24→32 core to the edge.
 static REDUCTION: LazyLock<Vec<String>> =
     LazyLock::new(|| read_pattern(include_str!("../../../data/compact_24_to_16.txt")));
 

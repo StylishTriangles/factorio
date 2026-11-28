@@ -132,7 +132,7 @@ fn compact_layout(pattern: &[String]) -> Layout {
             if x == 0 {
                 layout.input_rows.extend(port_rows.clone());
             }
-            if x == width - 1 {
+            if x == width - 1 && direction == EAST && kind != Kind::Input {
                 layout.output_rows.extend(port_rows);
             }
         }
@@ -691,11 +691,12 @@ mod tests {
             let mut edge_rows: Vec<_> = layout
                 .parts
                 .iter()
-                .filter(|part| part.x == x)
+                .filter(|part| part.x == x && (x == 0 || part.direction == EAST))
                 .flat_map(|part| {
                     assert_eq!(part.direction, EAST);
                     let ports: Vec<_> = match part.kind {
                         Kind::Belt => vec![part.y],
+                        Kind::Output if x != 0 => vec![part.y],
                         Kind::Splitter => [part.y, part.y + 1]
                             .into_iter()
                             .filter(|y| rows.binary_search(y).is_ok())
@@ -901,7 +902,7 @@ mod tests {
     #[test]
     fn compact_variants_stay_smaller_with_the_same_ports() {
         for (outputs, width, height, parts) in
-            [(16, 30, 32, 661), (24, 31, 24, 626), (32, 25, 32, 575)]
+            [(16, 29, 32, 631), (24, 31, 24, 626), (32, 25, 32, 575)]
         {
             let layout = get_layout_variant(24, outputs, 0, 0, true).unwrap();
             assert_eq!((layout.width, layout.height), (width, height));
