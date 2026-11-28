@@ -3,13 +3,16 @@ use super::{
     east_belts, push_belt,
 };
 
-mod compact_expansion;
+mod compact;
 mod rectangular;
 mod square_24;
 
-pub(super) fn generate(inputs: usize, outputs: usize, compact_expansion: bool) -> Option<Layout> {
-    if (inputs, outputs) == (24, 32) && compact_expansion {
-        return Some(compact_expansion::generate());
+pub(super) fn generate(inputs: usize, outputs: usize, use_compact: bool) -> Option<Layout> {
+    if inputs == 24
+        && use_compact
+        && let Some(layout) = compact::generate(outputs)
+    {
+        return Some(layout);
     }
     if inputs == 24 && matches!(outputs, 16 | 32) {
         return rectangular::generate(outputs as i32);

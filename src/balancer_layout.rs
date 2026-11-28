@@ -65,7 +65,7 @@ pub(crate) fn get_layout_variant(
     outputs: usize,
     input_gap: usize,
     output_gap: usize,
-    compact_expansion: bool,
+    use_compact: bool,
 ) -> Option<Layout> {
     if !(1..=MAX_LANES).contains(&inputs)
         || !(1..=MAX_LANES).contains(&outputs)
@@ -84,7 +84,7 @@ pub(crate) fn get_layout_variant(
     } else {
         let standard = with_ports(generate_layout(inputs, outputs));
         let score = |layout: &Layout| (layout.width * layout.height, layout.parts.len());
-        dense::generate(inputs, outputs, compact_expansion)
+        dense::generate(inputs, outputs, use_compact)
             .map(with_ports)
             .filter(|candidate| score(candidate) < score(&standard))
             .unwrap_or(standard)
@@ -127,11 +127,12 @@ fn compact_layout(pattern: &[String]) -> Layout {
                 kind,
                 direction,
             });
+            let port_rows = y..(y + 1 + i32::from(kind == Kind::Splitter && direction == EAST));
             if x == 0 {
-                layout.input_rows.push(y);
+                layout.input_rows.extend(port_rows.clone());
             }
             if x == width - 1 {
-                layout.output_rows.push(y);
+                layout.output_rows.extend(port_rows);
             }
         }
     }
@@ -782,25 +783,30 @@ mod tests {
     }
 
     #[test]
-    fn compact_expansion_stays_smaller_with_the_same_ports() {
-        let layout = get_layout_variant(24, 32, 0, 0, true).unwrap();
-        assert_eq!((layout.width, layout.height), (25, 32));
-        assert_eq!(layout.parts.len(), 575);
-        assert!(
-            layout
-                .parts
-                .iter()
-                .filter(|part| part.x == 0 || part.x == layout.width - 1)
-                .all(|part| part.kind == Kind::Splitter)
-        );
-        check_tracks(&layout);
+    fn compact_variants_stay_smaller_with_the_same_ports() {
+        for (outputs, width, height, parts) in
+            [(16, 30, 32, 661), (24, 31, 24, 626), (32, 25, 32, 575)]
+        {
+            let layout = get_layout_variant(24, outputs, 0, 0, true).unwrap();
+            assert_eq!((layout.width, layout.height), (width, height));
+            assert_eq!(layout.parts.len(), parts);
+            assert!(
+                layout
+                    .parts
+                    .iter()
+                    .filter(|part| part.x == 0 || (outputs != 16 && part.x == layout.width - 1))
+                    .all(|part| part.kind == Kind::Splitter)
+            );
+            check_tracks(&layout);
 
-        for input_gap in 0..=MAX_GAP {
-            for output_gap in 0..=MAX_GAP {
-                let layout = get_layout_variant(24, 32, input_gap, output_gap, true).unwrap();
-                check_geometry(&layout, 24, 32, (input_gap, output_gap));
-                let standard = get_layout(24, 32, input_gap, output_gap).unwrap();
-                assert!(layout.width * layout.height <= standard.width * standard.height);
+            for input_gap in 0..=MAX_GAP {
+                for output_gap in 0..=MAX_GAP {
+                    let layout =
+                        get_layout_variant(24, outputs, input_gap, output_gap, true).unwrap();
+                    check_geometry(&layout, 24, outputs, (input_gap, output_gap));
+                    let standard = get_layout(24, outputs, input_gap, output_gap).unwrap();
+                    assert!(layout.width * layout.height <= standard.width * standard.height);
+                }
             }
         }
     }

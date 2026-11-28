@@ -347,7 +347,7 @@ pub(crate) fn Balancers() -> Html {
                     </div>
                     <div class="settings-details">
                         <span>{"Spacing in empty tiles between belts. "}<strong>{"0"}</strong>{" puts belts side by side."}</span>
-                        if (counts.inputs, counts.outputs) == (24, 32) {
+                        if counts.inputs == 24 && matches!(counts.outputs, 16 | 24 | 32) {
                             <span>
                                 <label class="belt-compact">
                                     <input ref={compact} type="checkbox" checked={counts.compact}
