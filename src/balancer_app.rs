@@ -1,7 +1,9 @@
 use crate::app::{SiteHeader, chevron};
 use crate::balancer_blueprint::blueprint_string;
 use crate::balancer_canvas::{Art, draw_layout, draw_legend};
-use crate::balancer_layout::{MAX_GAP as MAX_SPACING, MAX_LANES, get_layout_variant};
+use crate::balancer_layout::{
+    MAX_GAP as MAX_SPACING, MAX_LANES, PortMode, STATION_LANES, get_layout_with_ports,
+};
 use crate::graph_viewport::GraphViewport;
 use wasm_bindgen::{JsCast, closure::Closure};
 use wasm_bindgen_futures::{JsFuture, spawn_local};
@@ -17,6 +19,8 @@ struct Settings {
     outputs: usize,
     input_spacing: usize,
     output_spacing: usize,
+    input_station: bool,
+    output_station: bool,
     compact: bool,
 }
 
@@ -25,6 +29,8 @@ const DEFAULT: Settings = Settings {
     outputs: 4,
     input_spacing: 0,
     output_spacing: 0,
+    input_station: false,
+    output_station: false,
     compact: true,
 };
 
@@ -46,11 +52,18 @@ struct Graphics {
 pub(crate) fn Balancers() -> Html {
     let counts = use_state_eq(|| DEFAULT);
     let generated = use_memo(*counts, |settings| {
-        get_layout_variant(
+        let mode = |station, gap| {
+            if station {
+                PortMode::Station
+            } else {
+                PortMode::Spacing(gap)
+            }
+        };
+        get_layout_with_ports(
             settings.inputs,
             settings.outputs,
-            settings.input_spacing,
-            settings.output_spacing,
+            mode(settings.input_station, settings.input_spacing),
+            mode(settings.output_station, settings.output_spacing),
             settings.compact,
         )
         .and_then(|layout| {
@@ -70,6 +83,8 @@ pub(crate) fn Balancers() -> Html {
     let outputs = use_node_ref();
     let input_spacing = use_node_ref();
     let output_spacing = use_node_ref();
+    let input_station = use_node_ref();
+    let output_station = use_node_ref();
     let compact = use_node_ref();
     let manual = use_node_ref();
     let files = use_node_ref();
@@ -89,6 +104,8 @@ pub(crate) fn Balancers() -> Html {
         let outputs = outputs.clone();
         let input_spacing = input_spacing.clone();
         let output_spacing = output_spacing.clone();
+        let input_station = input_station.clone();
+        let output_station = output_station.clone();
         let compact = compact.clone();
         Callback::from(move |()| {
             let read = |field: &NodeRef, min: usize, max: usize| {
@@ -96,12 +113,22 @@ pub(crate) fn Balancers() -> Html {
                 (value.fract() == 0.0 && (min as f64..=max as f64).contains(&value))
                     .then_some(value as usize)
             };
+            let inputs = read(&inputs, 1, MAX_LANES).unwrap_or(counts.inputs);
+            let outputs = read(&outputs, 1, MAX_LANES).unwrap_or(counts.outputs);
+            let station = |node: &NodeRef, lanes| {
+                station_available(lanes)
+                    && node
+                        .cast::<HtmlInputElement>()
+                        .is_some_and(|input| input.checked())
+            };
             let next = Settings {
-                inputs: read(&inputs, 1, MAX_LANES).unwrap_or(counts.inputs),
-                outputs: read(&outputs, 1, MAX_LANES).unwrap_or(counts.outputs),
+                inputs,
+                outputs,
                 input_spacing: read(&input_spacing, 0, MAX_SPACING).unwrap_or(counts.input_spacing),
                 output_spacing: read(&output_spacing, 0, MAX_SPACING)
                     .unwrap_or(counts.output_spacing),
+                input_station: station(&input_station, inputs),
+                output_station: station(&output_station, outputs),
                 compact: compact
                     .cast::<HtmlInputElement>()
                     .map_or(counts.compact, |input| input.checked()),
@@ -313,15 +340,21 @@ pub(crate) fn Balancers() -> Html {
                             <h2>{"Inputs"}</h2>
                             <div class="rate-pair">
                                 <NumberField node={inputs} label="Inputs" initial={DEFAULT.inputs} onblur={onblur.clone()}/>
-                                {spacing_slider(input_spacing, "Input spacing", counts.input_spacing, on_spacing.clone())}
+                                {spacing_slider(input_spacing, "Input spacing", counts.input_spacing, counts.input_station, on_spacing.clone())}
                             </div>
+                            if station_available(counts.inputs) {
+                                {station_checkbox(input_station, "Input station adapter", counts.input_station, on_layout.clone())}
+                            }
                         </div>
                         <div class="setting">
                             <h2>{"Outputs"}</h2>
                             <div class="rate-pair">
                                 <NumberField node={outputs} label="Outputs" initial={DEFAULT.outputs} {onblur}/>
-                                {spacing_slider(output_spacing, "Output spacing", counts.output_spacing, on_spacing)}
+                                {spacing_slider(output_spacing, "Output spacing", counts.output_spacing, counts.output_station, on_spacing)}
                             </div>
+                            if station_available(counts.outputs) {
+                                {station_checkbox(output_station, "Output station adapter", counts.output_station, on_layout.clone())}
+                            }
                         </div>
                         <div class="setting">
                             <h2>{"Blueprint"}</h2>
@@ -347,6 +380,9 @@ pub(crate) fn Balancers() -> Html {
                     </div>
                     <div class="settings-details">
                         <span>{"Spacing in empty tiles between belts. "}<strong>{"0"}</strong>{" puts belts side by side."}</span>
+                        if station_available(counts.inputs) || station_available(counts.outputs) {
+                            <span id="station-adapter-help">{"Station adapters leave one empty tile between groups of six belts."}</span>
+                        }
                         if counts.inputs == 24 && matches!(counts.outputs, 16 | 24 | 32) {
                             <span>
                                 <label class="belt-compact">
@@ -449,6 +485,7 @@ fn spacing_slider(
     node: NodeRef,
     label: &'static str,
     value: usize,
+    disabled: bool,
     oninput: Callback<InputEvent>,
 ) -> Html {
     let unit = if value == 1 { "tile" } else { "tiles" };
@@ -457,7 +494,25 @@ fn spacing_slider(
             <span aria-hidden="true">{"Spacing"}</span>
             <strong aria-hidden="true">{value}</strong>
             <input ref={node} type="range" min="0" max={MAX_SPACING.to_string()} step="1"
-                value={value.to_string()} aria-label={label} aria-valuetext={format!("{value} empty {unit}")} {oninput}/>
+                value={value.to_string()} aria-label={label} aria-valuetext={format!("{value} empty {unit}")} {disabled} {oninput}/>
+        </label>
+    }
+}
+
+fn station_available(lanes: usize) -> bool {
+    lanes.is_multiple_of(STATION_LANES)
+}
+
+fn station_checkbox(
+    node: NodeRef,
+    label: &'static str,
+    checked: bool,
+    onchange: Callback<Event>,
+) -> Html {
+    html! {
+        <label class="belt-compact belt-station">
+            <input ref={node} type="checkbox" aria-label={label} aria-describedby="station-adapter-help" {checked} {onchange}/>
+            {"Station adapter"}
         </label>
     }
 }
